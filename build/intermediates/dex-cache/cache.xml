@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-media-compat\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="09b462bbcb77650284bd6614f1a32f360ef369f8">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-media-compat-24.2.1_e13b4004786e26fae4e82bf8841bc35233b64040\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\androidsdk\sdk\extras\android\m2repository\com\android\support\support-annotations\24.2.1\support-annotations-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="8de3aafecbdf98a61db6427f008f2d515bcd2544">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\support-annotations-24.2.1_aba9282895f4b86eb972a3dfc42022aa65db2351\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\multidex\1.0.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="78ea232052df889856dcb7b7b542707c89bb3bfb">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-multidex-1.0.1_66dc19e0bd5b82b6f89c6bdc11568d4004fb64d7\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\recyclerview-v7\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="7521486d9bfd2cd9e756e0cf75ed7d97f2ce2d3b">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-recyclerview-v7-24.2.1_28fd0cc814e42880a37863f067cf7daaf2724080\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-core-ui\24.2.1\jars\libs\internal_impl-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="867dad63c33388ff8c7644b236579355036d075f">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\internal_impl-24.2.1_71b37ef0076522d4c8266e8b972fa1a130025420\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\cardview-v7\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="c5e6490573cd2cc8018417f60ddd251138b6ed61">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-cardview-v7-24.2.1_d9b941e39a5183b7fb9dc01a1c1ef9b4e5278867\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-core-utils\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="9c4c3bc902450c39ed54de170db4fb12aea20a35">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-core-utils-24.2.1_496cf1459db4fdd6707f925a06ed6d35ee7f12dd\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-fragment\24.2.1\jars\libs\internal_impl-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="5f64d657e838e8375135c0f6057a7ff8fab6a50e">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\internal_impl-24.2.1_add354b0eb91ecee67b4cb774d40c3eff6147e2d\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="06a3742a6689f26cbbc9592c53e16a792cb31320">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_74de5022dc45db961778b55008c8bad7236a17f2\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-fragment\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="b9a1ac78ad7ef3abedc4a4b30cd92bcacb939d1f">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-fragment-24.2.1_7fceee8c883e58713cbf03edc15545f542fbaa54\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-vector-drawable\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="d5c731fc64c03dfe04d51134955b483551c35849">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-vector-drawable-24.2.1_325d26bd4cd0186c74c010ae2236a34845ffd0a1\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="C:\Users\Umiya Mataji\.gradle\caches\modules-2\files-2.1\com.github.bumptech.glide\glide\3.7.0\9e9eeaf9948ee4d6c3ab354e8dc14368f16994a4\glide-3.7.0.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="9e9eeaf9948ee4d6c3ab354e8dc14368f16994a4">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\glide-3.7.0_1007d6337e238a23726434afadd2c0c598421852\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\libs\jcifs-1.3.18.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="29d62325100eac2bb3c25b44434acdc4d698c401">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\2\jcifs-1.3.18_ccdd58a2613ec37191b8b28273f0ee643023ba1f\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\animated-vector-drawable\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="94bc1dfb84dcc8b6f6f8f7cc726d7b2dd39c1574">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-animated-vector-drawable-24.2.1_e0ebcdfb032eb02d989958c3bae61f3b11e56d9a\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\design\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="e03f47f3d1017a093bb3239d4ec47c3447f40744">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-design-24.2.1_c86423911d8c21ed75fe2c937acb5b30217917fb\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="43b2dba6b5a0b14527961b75329d0b90025f15ea">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-appcompat-v7-24.2.1_222b8ace4d8a59f931edc28aa7c6c3a6d800cbdb\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-compat\24.2.1\jars\libs\internal_impl-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="7e4389bd133359a2ff88623ff1e4ff93d6e6f780">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\internal_impl-24.2.1_5c0032028db2fdaa3d81fb94d143318728033e55\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-core-ui\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="e7f3132168957eefc46229fc32c3bd464642b71e">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-core-ui-24.2.1_f6e81c6979839a07a525da54e7ced6f067a00366\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-core-utils\24.2.1\jars\libs\internal_impl-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="935a969265b2a166b2d20415423f5f6e90fe16e0">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\internal_impl-24.2.1_b129b54ca44b8a2c06dbb0499c83489ea80a3ae1\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\libs\RootTools.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="16b2d49a7359c9ddbfcb1bc66f9c342c502e821b">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\2\RootTools_959565bdcd60005f7fb4465c729654e61a16a621\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-compat\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="0ecb4b595fa0f0f8018a149ace3ea6525624f94e">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-compat-24.2.1_fd30d646e020ce6fb48b9d230404930bdbdb1b7f\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-media-compat\24.2.1\jars\libs\internal_impl-24.2.1.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="fbf8da429efd5ad21e02e3e5ecaa1efc4167878d">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\internal_impl-24.2.1_d8b38c4340f566fea99eee22e4fb02dc5ae55b31\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="44966d994a24a9103764d49e7c584939ce815aa5">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_2278bb7799feab9b331d5fb7fa71b9c7ce51f28e\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\exploded-aar\com.android.support\support-v4\24.2.1\jars\classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="24.0.2"
+        sha1="d7c42c80f6509b9ea4db28ca7859ffae08ec5741">
+        <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\com.android.support-support-v4-24.2.1_82165749236ea85fd2fe422f2a100d26aab8d901\classes.dex" />
+    </item>
+
+</items>

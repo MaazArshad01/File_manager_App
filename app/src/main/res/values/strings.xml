@@ -1,0 +1,110 @@
+<resources>
+
+    <string name="app_name">File Manager</string>
+    <string name="manager_act">Process Manager</string>
+    <string name="media_dialog">Media Dialog</string>
+    <string name="dir_info">Directory Info</string>
+    <string name="free_space">free space</string>
+    <string name="device">Device</string>
+    <string name="home">Home</string>
+    <string name="sdcard_storage">SD Card</string>
+    <string name="download">Download</string>
+    <string name="network">Network</string>
+    <string name="gallary">Gallery</string>
+    <string name="audio">Audio</string>
+    <string name="video">Video</string>
+    <string name="doc">Doc</string>
+    <string name="apk">Apk</string>
+    <string name="setting">Setting</string>
+    <string name="help">Help</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string-array name="navDrawerItems">
+        <item>@string/home</item>
+        <item>@string/device</item>
+        <item>@string/sdcard_storage</item>
+        <item>@string/download</item>
+        <item>@string/network</item>
+        <item>@string/gallary</item>
+        <item>@string/audio</item>
+        <item>@string/video</item>
+        <item>@string/doc</item>
+        <item>@string/apk</item>
+        <item>@string/setting</item>
+        <item>@string/help</item>
+    </string-array>
+
+    <string-array name="navDrawerIcons">
+        <item>@drawable/ic_menu_home</item>
+        <item>@drawable/ic_menu_device_storage</item>
+        <item>@drawable/ic_menu_sdcard_storage</item>
+        <item>@drawable/ic_menu_download</item>
+        <item>@drawable/ic_menu_network</item>
+        <item>@drawable/ic_menu_gallary</item>
+        <item>@drawable/ic_menu_audio</item>
+        <item>@drawable/ic_menu_video</item>
+        <item>@drawable/ic_menu_doc</item>
+        <item>@drawable/ic_menu_doc</item>
+        <item>@drawable/ic_menu_apk</item>
+        <item>@drawable/ic_menu_setting</item>
+        <item>@drawable/ic_menu_help</item>
+    </string-array>
+
+    <string name="font_regular">roboto_regular.ttf</string>
+    <string name="font_thin">roboto_thin.ttf</string>
+    <string name="font_bold">roboto_bold.ttf</string>
+    <string name="font_helvetica_neue_regular">helvetica_neue_regular.ttf</string>
+    <string name="font_montserrat_regular">montserrat_regular.otf</string>
+    <string name="font_montserrat_light">montserrat_light.otf</string>
+    <string name="delete">Delete</string>
+    <string name="copy">Copy</string>
+    <string name="cut">Cut</string>
+    <string name="detail">Detail</string>
+    <string name="paste">Paste</string>
+    <string name="cancel">Cancel</string>
+    <string name="btn_lbl_okay">Ok</string>
+    <string name="rename">Rename</string>
+    <string name="addtofav">Add to Favourites</string>
+    <string name="zip">Zip</string>
+    <string name="share">Share</string>
+    <string name="batchrename">Batch Rename</string>
+    <string name="search">Search</string>
+    <string name="newfile">New File</string>
+    <string name="newfolder">New Folder</string>
+    <string name="entername">Please enter the name</string>
+
+    <string name="msg_prompt_file_created">File created.</string>
+    <string name="msg_prompt_file_not_created">File not created..!</string>
+    <string name="msg_prompt_file_already_exits">File already exits</string>
+    <string name="no_media_found">No files</string>
+    <string name="property">Properties</string>
+    <string name="open">Open</string>
+    <string name="uninstall">Uninstall</string>
+    <string name="recent_added_pics">Recently Added Photos</string>
+    <string name="recent_added_files">Recently Added Files</string>
+    <string name="no_network_found">No local network found</string>
+
+    <string name="btn_lbl_connect">Connect</string>
+    <string name="connectionname">Connection name</string>
+    <string name="smb_server">Server IP Address</string>
+    <string name="domain">Domain</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="wanthelp"><u>Need help?</u></string>
+
+    <string name="cantbeempty">%s cannot be empty</string>
+    <string name="ip">Address</string>
+    <string name="invalid">Invalid %s</string>
+    <string name="smb_con">SMB Connection</string>
+    <string name="gotit">GOT IT</string>
+    <string name="music">Music</string>
+
+    <string name="deleting">Deleting</string>
+    <string name="copying">Copying</string>
+    <string name="moving">Moving</string>
+    <string name="stopping">Stopping</string>
+
+</resources>

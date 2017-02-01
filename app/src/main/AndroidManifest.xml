@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+	Open Manager, an open source file manager for the Android system
+    Copyright (C) 2009, 2010, 2011  Joe Berria <nexesdevelopment@gmail.com>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.jksol.filemanager">
+
+    <supports-screens
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+
+    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+
+    <uses-permission android:name="android.permission.GET_PACKAGE_SIZE" />
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!--
+    uncomment this in order to allow wifi information displayed
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    -->
+
+    <application
+        android:name=".Utils.AppController"
+        android:icon="@drawable/icon"
+        android:label="@string/app_name">
+
+        <activity
+            android:name="com.jksol.filemanager.Settings"
+            android:label="@string/app_name" />
+        <activity
+            android:name="com.jksol.filemanager.ProcessManager"
+            android:label="@string/manager_act" />
+        <activity
+            android:name="com.jksol.filemanager.WirelessManager"
+            android:label="Wireless Information" />
+        <activity
+            android:name="com.jksol.filemanager.ApplicationBackup"
+            android:label="Installed Applications" />
+
+        <!-- <activity
+             android:name=".Main"
+             android:label="@string/app_name">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
+             <intent-filter>
+                 <action android:name="android.intent.action.GET_CONTENT" />
+
+                 <data android:mimeType="*/*" />
+
+                 <category android:name="android.intent.category.OPENABLE" />
+                 <category android:name="android.intent.category.DEFAULT" />
+             </intent-filter>
+         </activity>-->
+
+
+        <activity
+            android:name="com.jksol.filemanager.AudioPlayblack"
+            android:label="@string/media_dialog"
+            android:theme="@android:style/Theme.Dialog" />
+        <activity
+            android:name="com.jksol.filemanager.FileOperation.DirectoryInfo"
+            android:enabled="true"
+            android:label="@string/dir_info">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <data android:mimeType="application/manager" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.jksol.filemanager.HelpManager"
+            android:label="About Open Manager"
+            android:theme="@android:style/Theme.Dialog" />
+
+        <!--
+             	 widget
+                <activity android:name=".AppWidgetConfigureActivity">
+                    <intent-filter>
+                        <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+                    </intent-filter>
+                </activity>
+
+                  <receiver android:name=".FolderWidgetProvider">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                      </intent-filter>
+                      <meta-data android:name="android.appwidget.provider"
+                                 android:resource="@xml/folder_widget_info" />
+                  </receiver>
+        -->
+        <activity
+            android:name="com.jksol.filemanager.MainActivity"
+            android:theme="@style/AppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
+        </activity>
+
+        <service
+            android:name=".FileOperation.ZipTask"
+            android:label="Compressing"></service>
+
+        <service
+            android:name=".Services.CopyService"
+            android:label="Copying"></service>
+        <service
+            android:name=".Services.DeleteService"
+            android:label="Deleting"></service>
+
+    </application>
+
+</manifest>

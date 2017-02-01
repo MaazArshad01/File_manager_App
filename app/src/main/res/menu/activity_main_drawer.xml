@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_menu_home"
+            android:title="@string/home" />
+        <item
+            android:id="@+id/nav_device_storage"
+            android:icon="@drawable/ic_menu_device_storage"
+            android:title="@string/device" />
+        <item
+            android:id="@+id/nav_sdcard_storage"
+            android:icon="@drawable/ic_menu_sdcard_storage"
+            android:title="@string/sdcard_storage" />
+        <item
+            android:id="@+id/nav_download"
+            android:icon="@drawable/ic_menu_download"
+            android:title="@string/download" />
+        <item
+            android:id="@+id/nav_network"
+            android:icon="@drawable/ic_menu_network"
+            android:title="@string/network" />
+        <item
+            android:id="@+id/nav_gallary"
+            android:icon="@drawable/ic_menu_gallary"
+            android:title="@string/gallary" />
+        <item
+            android:id="@+id/nav_audio"
+            android:icon="@drawable/ic_menu_audio"
+            android:title="@string/audio" />
+        <item
+            android:id="@+id/nav_video"
+            android:icon="@drawable/ic_menu_video"
+            android:title="@string/video" />
+
+        <item
+            android:id="@+id/nav_doc"
+            android:icon="@drawable/ic_menu_doc"
+            android:title="@string/doc" />
+
+        <item
+            android:id="@+id/nav_apk"
+            android:icon="@drawable/ic_menu_apk"
+            android:title="@string/apk" />
+
+        <item
+            android:id="@+id/nav_setting"
+            android:icon="@drawable/ic_menu_setting"
+            android:title="@string/setting" />
+
+        <item
+            android:id="@+id/nav_help"
+            android:icon="@drawable/ic_menu_help"
+            android:title="@string/help" />
+    </group>
+
+    <!--<item android:title="@string/tools">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:title="@string/share"
+                android:icon="@drawable/ic_menu_share"/>
+            <item
+                android:id="@+id/nav_settings"
+                android:title="@string/settings"
+                android:icon="@drawable/ic_menu_settings"/>
+        </menu>
+    </item>-->
+
+</menu>
