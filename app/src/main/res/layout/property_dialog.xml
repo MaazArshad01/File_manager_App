@@ -9,8 +9,10 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp">
 
         <LinearLayout
             android:id="@+id/delete_dialog_layout"
@@ -37,134 +39,432 @@
                     android:textSize="16sp"
                     app:fontName="@string/font_helvetica_neue_regular" />
 
-
-                <LinearLayout
+                <ScrollView
+                    android:id="@+id/container_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/txt_dialog_label"
-                    android:layout_marginTop="10dp"
-                    android:orientation="vertical">
+                    android:layout_below="@+id/txt_dialog_label">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="20dp"
-                        android:layout_marginRight="10dp"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/file_icon"
-                            android:layout_width="35dp"
-                            android:layout_height="35dp" />
-
-                        <com.jksol.filemanager.Widgets.CustomTextView
-                            android:id="@+id/file_name"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginLeft="5dp"
-                            android:text="Instagram"
-                            android:textSize="16sp"
-                            app:fontName="@string/font_montserrat_regular" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/divider"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/txt_dialog_label"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/simple_border"
-                        android:textSize="1dp" />
-
-                    <LinearLayout
-                        android:id="@+id/filefolder_property_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"></LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/app_property_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
                         android:orientation="vertical">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="5dp"
-                            android:weightSum="100">
+                            android:layout_marginLeft="20dp"
+                            android:layout_marginRight="10dp"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:id="@+id/file_icon"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp" />
 
                             <com.jksol.filemanager.Widgets.CustomTextView
+                                android:id="@+id/file_name"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="60"
-                                android:text="Version:" />
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginLeft="10dp"
+                                android:text="Instagram"
+                                android:textSize="16sp"
+                                app:fontName="@string/font_montserrat_regular" />
 
-                            <com.jksol.filemanager.Widgets.CustomTextView
-                                android:id="@+id/versionCode"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="40"
-                                android:text="10.4.0.0" />
                         </LinearLayout>
 
-                        <LinearLayout
+                        <TextView
+                            android:id="@+id/divider"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="5dp"
-                            android:weightSum="100">
+                            android:layout_below="@+id/txt_dialog_label"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/simple_border"
+                            android:textSize="1dp" />
 
-                            <com.jksol.filemanager.Widgets.CustomTextView
+
+                        <!--    App Property Layout     -->
+                        <LinearLayout
+                            android:id="@+id/app_property_layout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="10dp"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="60"
-                                android:text="Size:" />
+                                android:orientation="horizontal"
+                                android:padding="5dp"
+                                android:weightSum="100">
 
-                            <com.jksol.filemanager.Widgets.CustomTextView
-                                android:id="@+id/filesize"
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="60"
+                                    android:text="Version:" />
+
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:id="@+id/versionCode"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="40"
+                                    android:text="10.4.0.0" />
+                            </LinearLayout>
+
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="40"
-                                android:text="18.9 MB" />
+                                android:orientation="horizontal"
+                                android:padding="5dp"
+                                android:weightSum="100">
+
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="60"
+                                    android:text="Size:" />
+
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:id="@+id/filesize"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="40"
+                                    android:text="18.9 MB" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="5dp"
+                                android:weightSum="100">
+
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="60"
+                                    android:text="package Name:" />
+
+                                <com.jksol.filemanager.Widgets.CustomTextView
+                                    android:id="@+id/packagename"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="40"
+                                    android:text="com.instagrammmmmer.com" />
+                            </LinearLayout>
+
                         </LinearLayout>
 
+                        <!--    Files Property Layout   -->
                         <LinearLayout
+                            android:id="@+id/file_property_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="5dp"
-                            android:weightSum="100">
+                            android:orientation="vertical"
+                            android:visibility="gone">
 
-                            <com.jksol.filemanager.Widgets.CustomTextView
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="60"
-                                android:text="package Name:" />
+                                android:layout_margin="10dp"
+                                android:orientation="vertical">
 
-                            <com.jksol.filemanager.Widgets.CustomTextView
-                                android:id="@+id/packagename"
+                                <LinearLayout
+                                    android:id="@+id/type_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="60"
+                                        android:text="Type:" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/file_type"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="40"
+                                        android:text="File" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="60"
+                                        android:text="Path:" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/file_path"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="40"
+                                        android:text="/sdcard/aaaaa/" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/copy_path_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="right"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/copy_path"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="70"
+                                        android:background="@drawable/button_shape"
+                                        android:gravity="center"
+                                        android:padding="5dp"
+                                        android:text="Copy"
+                                        android:textColor="@color/white"
+                                        android:textSize="10sp"
+                                        app:fontName="@string/font_regular" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/copy_full_path"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginLeft="5dp"
+                                        android:layout_weight="60"
+                                        android:background="@drawable/button_shape"
+                                        android:gravity="center"
+                                        android:padding="5dp"
+                                        android:text="Copy fullpath"
+                                        android:textColor="@color/white"
+                                        android:textSize="10sp" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="60"
+                                        android:text="Total Files:" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/total_file_contain"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="40"
+                                        android:text="20 Folders, 4181 Files" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="60"
+                                        android:text="size:" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/file_size"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="40"
+                                        android:text="50 MB" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/more_datail_layout"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="40"
-                                android:text="com.instagrammmmmer.com" />
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@+id/txt_dialog_label"
+                                    android:background="@drawable/simple_border"
+                                    android:textSize="1dp" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="10dp"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:padding="5dp"
+                                        android:visibility="gone"
+                                        android:weightSum="100">
+
+                                        <com.jksol.filemanager.Widgets.CustomTextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="60"
+                                            android:text="Created:" />
+
+                                        <com.jksol.filemanager.Widgets.CustomTextView
+                                            android:id="@+id/file_created"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="40"
+                                            android:text="30/01/17 11:51:52 AM" />
+
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:padding="5dp"
+                                        android:weightSum="100">
+
+                                        <com.jksol.filemanager.Widgets.CustomTextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="60"
+                                            android:text="Modified:" />
+
+                                        <com.jksol.filemanager.Widgets.CustomTextView
+                                            android:id="@+id/file_modified"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="40"
+                                            android:text="30/01/17 11:51:52 AM" />
+
+                                    </LinearLayout>
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@+id/txt_dialog_label"
+                                    android:background="@drawable/simple_border"
+                                    android:textSize="1dp" />
+
+                                <LinearLayout
+                                    android:id="@+id/file_permission_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="10dp"
+                                    android:orientation="horizontal"
+                                    android:padding="5dp"
+                                    android:weightSum="100">
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="60"
+                                        android:text="Permission:" />
+
+                                    <com.jksol.filemanager.Widgets.CustomTextView
+                                        android:id="@+id/file_permission"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="10dp"
+                                        android:layout_weight="40"
+                                        android:text="Read Only, \n Write Only" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
                         </LinearLayout>
 
                     </LinearLayout>
 
-                </LinearLayout>
+                </ScrollView>
+
 
             </RelativeLayout>
 
             <LinearLayout
+                android:id="@+id/file_bottom_btns"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_alignParentBottom="true"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1sp"
+                    android:background="@color/colorFooterBorderTop" />
+
+                <com.jksol.filemanager.Widgets.CustomTextView
+                    android:id="@+id/file_dialog_cancel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="30"
+                    android:background="@drawable/selector"
+                    android:gravity="center"
+                    android:padding="15dp"
+                    android:text="@string/cancel"
+                    android:textColor="@color/colorPrimary"
+                    app:fontName="@string/font_helvetica_neue_regular" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/multiplefile_bottom_btns"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1sp"
+                    android:background="@color/colorFooterBorderTop" />
+
+                <com.jksol.filemanager.Widgets.CustomTextView
+                    android:id="@+id/multplefile_dialog_cancel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="30"
+                    android:background="@drawable/selector"
+                    android:gravity="center"
+                    android:padding="15dp"
+                    android:text="@string/cancel"
+                    android:textColor="@color/colorPrimary"
+                    app:fontName="@string/font_helvetica_neue_regular" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/apps_bottom_btns"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <View
                     android:layout_width="match_parent"
@@ -216,6 +516,8 @@
                 </LinearLayout>
 
             </LinearLayout>
+
+
         </LinearLayout>
 
     </FrameLayout>

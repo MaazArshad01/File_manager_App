@@ -13,6 +13,7 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.jksol.filemanager.Fragments.GalleryFragment.Adapter.ImagesListAdapter;
 import com.jksol.filemanager.Fragments.GalleryFragment.LoadFiles;
@@ -27,6 +29,7 @@ import com.jksol.filemanager.Interfaces.FragmentChange;
 import com.jksol.filemanager.MainActivity;
 import com.jksol.filemanager.Model.MediaFileListModel;
 import com.jksol.filemanager.R;
+import com.jksol.filemanager.Utils.AppController;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,13 +39,14 @@ import java.util.Date;
 import java.util.List;
 
 
-public class HomeFragment extends Fragment implements View.OnClickListener {
+public class HomeFragment extends Fragment implements View.OnClickListener, MainActivity.ButtonBackPressListener {
 
     private static final String FG_TAG_DEVICE = "device_fragment";
     private static final String FG_TAG_GALLARY = "gallary_fragment";
     private static final String FG_TAG_APK = "apk_fragment";
     private static final String FG_TAG_DOWNLOAD = "download_fragment";
     private static final String FG_TAG_DOC = "doc_fragment";
+
     // ================== Recent Photos Varible ==================
     RecyclerView recent_added_pics_recyclerview;
     private Context mContext;
@@ -65,6 +69,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private LinearLayout file_layout, gallery_layout, apps_layout, music_layout, video_layout, doc_layout, download_layout;
     private CardView recent_added_pic_layout, recent_added_file_layout;
     private FragmentChange fragmentChangeListner;
+    private boolean mUseBackKey;
     // ================================================================
 
     public void setFragmentChangeListner(FragmentChange fragmentChangeListner) {
@@ -72,8 +77,23 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (isVisibleToUser) {
+            AppController.getInstance().setButtonBackPressed(this);
+        } else {
+            AppController.getInstance().setButtonBackPressed(null);
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, null);
+
+        mUseBackKey = true;
+        AppController.getInstance().setButtonBackPressed(this);
+
         setHasOptionsMenu(true);
         mContext = getActivity();
         initView(view);
@@ -161,7 +181,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         imagesListAdapter = new ImagesListAdapter(imageListModelsArray, "SmallGallery");
         recent_added_pics_recyclerview.setHasFixedSize(true);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, 4);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, 4) {
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        };
         recent_added_pics_recyclerview.setLayoutManager(gridLayoutManager);
         recent_added_pics_recyclerview.setItemAnimator(new DefaultItemAnimator());
         recent_added_pics_recyclerview.setAdapter(imagesListAdapter);
@@ -178,7 +203,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         filesListModelsArray = new ArrayList<MediaFileListModel>();
         recent_added_file_recyclerview.setHasFixedSize(true);
 
-        GridLayoutManager gridLayoutManager1 = new GridLayoutManager(mContext, 4);
+        GridLayoutManager gridLayoutManager1 = new GridLayoutManager(mContext, 4) {
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        };
         recent_added_file_recyclerview.setLayoutManager(gridLayoutManager1);
         recent_added_file_recyclerview.setItemAnimator(new DefaultItemAnimator());
        /* root = new File(Environment.getExternalStorageDirectory()
@@ -310,6 +340,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
+    }
+
+    @Override
+    public void onButtonBackPressed(int keycode, KeyEvent event) {
+        if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey) {
+            Toast.makeText(mContext, "Press back again to quit.", Toast.LENGTH_SHORT).show();
+            mUseBackKey = false;
+        } else if (keycode == KeyEvent.KEYCODE_BACK  && !mUseBackKey) {
+            getActivity().finish();
+        }
     }
 
     class getTypedFile extends AsyncTask<String, Void, ArrayList<MediaFileListModel>> {

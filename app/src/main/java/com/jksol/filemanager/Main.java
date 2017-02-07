@@ -161,7 +161,7 @@ public final class Main extends ListActivity {
         updateStorageLabel();
         mStorageLabel.setVisibility(space);
 
-        mHandler.setUpdateLabels(mPathLabel, mDetailLabel);
+        //mHandler.setUpdateLabels(mPathLabel, mDetailLabel, empty_layout);
         
         /* setup buttons */
         int[] img_button_id = {R.id.help_button, R.id.home_button,

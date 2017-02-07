@@ -79,7 +79,7 @@
         jumboMode="true"
         optimize="true"
         revision="24.0.2"
-        sha1="06a3742a6689f26cbbc9592c53e16a792cb31320">
+        sha1="b47de40b166e9f31fb65928b1e04f6860abd1280">
         <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_74de5022dc45db961778b55008c8bad7236a17f2\classes.dex" />
     </item>
     <item
@@ -205,7 +205,7 @@
         jumboMode="true"
         optimize="true"
         revision="24.0.2"
-        sha1="44966d994a24a9103764d49e7c584939ce815aa5">
+        sha1="56f12d55e20851c2f015bf39f82a5ffe5058dc05">
         <dex dex="D:\Akhil\Projects\FileManager\FileExplorer\FileExplorer\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_2278bb7799feab9b331d5fb7fa71b9c7ce51f28e\classes.dex" />
     </item>
     <item

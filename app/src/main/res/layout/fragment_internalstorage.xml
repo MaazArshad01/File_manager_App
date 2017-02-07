@@ -134,6 +134,37 @@
         android:background="#FFFFFF"
         android:scrollbars="vertical" />
 
+    <LinearLayout
+        android:id="@+id/empty_layout"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/folder_default" />
+
+        <com.jksol.filemanager.Widgets.CustomTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/empty"
+            android:textSize="12sp"
+            app:fontName="@string/font_helvetica_neue_regular" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/file_loader"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:indeterminate="true" />
+
     <!--  Footer for Multi-select buttons -->
     <LinearLayout
         android:id="@+id/hidden_buttons"
@@ -150,6 +181,7 @@
             android:background="@drawable/simple_border" />
 
         <LinearLayout
+            android:id="@+id/operationlayout_one"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"

@@ -22,11 +22,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import jcifs.smb.SmbFile;
+import jcifs.smb.SmbFileInputStream;
 
 public class ThumbnailCreator extends Thread {
     private static HashMap<String, Bitmap> mCacheMap = null;
@@ -70,10 +77,31 @@ public class ThumbnailCreator extends Thread {
                 mFiles = null;
                 return;
             }
-            final File file = new File(mDir + "/" + mFiles.get(i));
 
-            if (isImageFile(file.getName())) {
-                long len_kb = file.length() / 1024;
+            String name = "";
+            long length = 0;
+            String path = "";
+            SmbFile smbFile = null;
+
+            if (mDir.startsWith("smb://")) {
+                try {
+                    smbFile = new SmbFile(mDir + mFiles.get(i));
+                    name = smbFile.getName();
+                    length = smbFile.length();
+                    path = smbFile.getPath();
+                } catch (Exception e) {
+                }
+            } else {
+                final File file = new File(mDir + "/" + mFiles.get(i));
+                name = file.getName();
+                length = file.length();
+                path = file.getPath();
+            }
+
+
+            if (isImageFile(name)) {
+
+                long len_kb = length / 1024;
 
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.outWidth = mWidth;
@@ -82,26 +110,64 @@ public class ThumbnailCreator extends Thread {
                 if (len_kb > 1000 && len_kb < 5000) {
                     options.inSampleSize = 32;
                     options.inPurgeable = true;
-                    mThumb = new SoftReference<Bitmap>(BitmapFactory.decodeFile(file.getPath(), options));
+
+                    Bitmap bitmap = null;
+                    try {
+
+                        if (mDir.startsWith("smb://"))
+                            bitmap = BitmapFactory.decodeStream(new SmbFileInputStream(smbFile), null, options);
+                        else
+                            bitmap = BitmapFactory.decodeFile(path, options);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    mThumb = new SoftReference<Bitmap>(bitmap);
 
                 } else if (len_kb >= 5000) {
                     options.inSampleSize = 32;
                     options.inPurgeable = true;
-                    mThumb = new SoftReference<Bitmap>(BitmapFactory.decodeFile(file.getPath(), options));
+
+                    Bitmap bitmap = null;
+                    try {
+
+                        if (mDir.startsWith("smb://"))
+                            bitmap = BitmapFactory.decodeStream(new SmbFileInputStream(smbFile), null, options);
+                        else
+                            bitmap = BitmapFactory.decodeFile(path, options);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    mThumb = new SoftReference<Bitmap>(bitmap);
 
                 } else if (len_kb <= 1000) {
                     try {
                         options.inPurgeable = true;
+
+                        Bitmap bitmap = null;
+                        try {
+
+                            if (mDir.startsWith("smb://"))
+                                bitmap = BitmapFactory.decodeStream(new SmbFileInputStream(smbFile), null, options);
+                            else
+                                bitmap = BitmapFactory.decodeFile(path, options);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                         mThumb = new SoftReference<Bitmap>(Bitmap.createScaledBitmap(
-                                BitmapFactory.decodeFile(file.getPath()),
+                                bitmap,
                                 mWidth,
                                 mHeight,
                                 false));
+
+
                     } catch (Exception e) {
                     }
                 }
                 try {
-                    mCacheMap.put(file.getPath(), mThumb.get());
+                    mCacheMap.put(path, mThumb.get());
 
                     mHandler.post(new Runnable() {
                         @Override

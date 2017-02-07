@@ -218,7 +218,7 @@ public class LanStorageFragment extends Fragment implements MainActivity.ButtonB
       //  Log.d("Document Type", getMimeType("/storage/emulated/0/abc2.docx"));
       /*  Log.d("Document File","Internal File Count :- " + String.valueOf(mFileMag.FindDifferentFile(new File(path)).size()));*/
 
-        mHandler.setUpdateLabels(mPathLabel, mDetailLabel);
+      //  mHandler.setUpdateLabels(mPathLabel, mDetailLabel, empty_layout);
 
         mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
         mHandler.setUpdateFileOperationViews(hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail);
@@ -441,7 +441,7 @@ public class LanStorageFragment extends Fragment implements MainActivity.ButtonB
 
         mHandler = new EventHandler(mContext.getContext(), mFileMag, utils.getStoragePaths("InternalStorage"));
 
-        mHandler.setUpdateLabels(mPathLabel, mDetailLabel);
+      //  mHandler.setUpdateLabels(mPathLabel, mDetailLabel, empty_layout);
         mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
 
         mTable = mHandler.new RecyclerViewTableRow();
@@ -493,6 +493,7 @@ public class LanStorageFragment extends Fragment implements MainActivity.ButtonB
                     } else {
                         if (file.isDirectory()) {
                             if (file.canRead()) {
+                                mHandler.stopFileLoadThread();
                                 mHandler.stopThumbnailThread();
                                 mHandler.updateDirectory(mFileMag.getNextDir(item, false));
                                 mPathLabel.setText(mFileMag.getCurrentDir());
@@ -803,6 +804,7 @@ public class LanStorageFragment extends Fragment implements MainActivity.ButtonB
 
             } else {
                 //stop updating thumbnail icons if its running
+                mHandler.stopFileLoadThread();
                 mHandler.stopThumbnailThread();
                 mHandler.updateDirectory(mFileMag.getPreviousDir());
                 mPathLabel.setText(mFileMag.getCurrentDir());

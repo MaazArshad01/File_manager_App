@@ -84,7 +84,7 @@ public class DeleteService extends Service {
     @Override
     public void onCreate() {
         c = getApplicationContext();
-        registerReceiver(receiver1, new IntentFilter("copycancel"));
+        registerReceiver(receiver1, new IntentFilter("deletecancel"));
     }
 
     @Override
@@ -96,6 +96,7 @@ public class DeleteService extends Service {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mBuilder = new NotificationCompat.Builder(this);
         Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         notificationIntent.putExtra("openprocesses", true);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         mBuilder.setContentIntent(pendingIntent);
@@ -200,10 +201,7 @@ public class DeleteService extends Service {
     public void publishCompletedResult(int id1) {
         try {
             mNotifyManager.cancel(id1);
-            Intent intent = new Intent("DeleteCompleted");
-            intent.putExtra("started", false);
-            intent.putExtra("completed", true);
-            sendBroadcast(intent);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -257,8 +255,7 @@ public class DeleteService extends Service {
         private Delete delete;
         private String serviceType;
 
-        public Doback() {
-        }
+        public Doback() { }
 
         protected Integer doInBackground(Bundle... p1) {
 
@@ -283,10 +280,13 @@ public class DeleteService extends Service {
         @Override
         public void onPostExecute(Integer b) {
             publishResults("", b, 0, 0, true, serviceType);
+            Intent intent1 = new Intent("DeleteCompleted");
+            intent1.putExtra("started", false);
+            intent1.putExtra("completed", true);
+            sendBroadcast(intent1);
 
-            //  generateNotification(delete.failedFOps, true);
-            Intent intent = new Intent("loadlist");
-            sendBroadcast(intent);
+            // generateNotification(delete.failedFOps, true);
+
             hash.put(b, false);
             boolean stop = true;
             for (int a : hash.keySet()) {
@@ -379,12 +379,16 @@ public class DeleteService extends Service {
                 HFile target = hfile;
                 if (!hash.get(id)) return;
 
-                if (target.exists() && target.isFile() && target.canWrite()) {
-                    deleteFiles(hfile);
+                // if (target.exists() && target.isFile() && target.canWrite()) {
+                if (target.exists() && target.isFile()) {
+
+                    if (target.getMode() != HFile.SMB_MODE)
+                        deleteFiles(hfile);
+
                     target.delete(c);
 
-
-                } else if (target.exists() && target.isDirectory() && target.canRead()) {
+                    //} else if (target.exists() && target.isDirectory() && target.canRead()) {
+                } else if (target.exists() && target.isDirectory()) {
                     String[] file_list = target.list();
 
                     if (file_list != null && file_list.length == 0) {
@@ -402,7 +406,10 @@ public class DeleteService extends Service {
                                 deleteTarget(temp_f, id, serviceType);
                             else if (temp_f.isFile()) {
                                 totalDeletedFiles += 1;
-                                deleteFiles(temp_f);
+
+                                if (target.getMode() != HFile.SMB_MODE)
+                                    deleteFiles(temp_f);
+
                                 temp_f.delete(c);
                                 calculateProgress(temp_f.getName(), totalDeletedFiles, id, serviceType);
                             }
@@ -411,7 +418,7 @@ public class DeleteService extends Service {
 
                     if (target.exists())
                         if (target.delete(c)) {
-                            totalDeletedFiles += 1;
+                           // totalDeletedFiles += 1;
                             calculateProgress(target.getName(), totalDeletedFiles, id, serviceType);
                         }
                 }

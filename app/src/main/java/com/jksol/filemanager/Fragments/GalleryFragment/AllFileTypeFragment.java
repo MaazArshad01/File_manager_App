@@ -51,9 +51,9 @@ import com.jksol.filemanager.Fragments.GalleryFragment.Adapter.ImagesListAdapter
 import com.jksol.filemanager.Model.MediaFileListModel;
 import com.jksol.filemanager.R;
 import com.jksol.filemanager.Utils.AppController;
+import com.jksol.filemanager.Utils.FileUtil;
 import com.jksol.filemanager.Utils.Futils;
 import com.jksol.filemanager.Utils.RecyclerTouchListener;
-import com.jksol.filemanager.Utils.Utils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -122,6 +122,7 @@ public class AllFileTypeFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
+
         inflater.inflate(R.menu.storage_menu, menu);
         MenuItem menu_new_file = menu.findItem(R.id.menu_new_file);
         menu_new_file.setVisible(false);
@@ -129,6 +130,10 @@ public class AllFileTypeFragment extends Fragment {
         menu_new_folder.setVisible(false);
 
         MenuItem searchItem = menu.findItem(R.id.search);
+        if (mParamFileType.equalsIgnoreCase("Gallery")) {
+            searchItem.setVisible(false);
+        }
+
         SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
 
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -216,7 +221,8 @@ public class AllFileTypeFragment extends Fragment {
                     openDocFileIntents(docFiles);
                 } else if (mParamFileType.equalsIgnoreCase("Apk")) {
                     MediaFileListModel apkFiles = imageListModelsArray.get(position);
-                    //propertyDialog(apkFiles);
+                    if (FileUtil.FileOperation)
+                        propertyDialog(apkFiles);
 
                     /*FileManager fileManager = new FileManager();
                     fileManager.copyToDirectory(apkFiles.getFilePath(), "/storage/emulated/0");
@@ -244,6 +250,11 @@ public class AllFileTypeFragment extends Fragment {
         properties_dialog.show();
 
         //Field Init
+        LinearLayout app_property_layout = (LinearLayout) properties_dialog.findViewById(R.id.app_property_layout);
+        app_property_layout.setVisibility(View.VISIBLE);
+        LinearLayout apps_bottom_btns = (LinearLayout) properties_dialog.findViewById(R.id.apps_bottom_btns);
+        apps_bottom_btns.setVisibility(View.VISIBLE);
+
         ImageView file_icon = (ImageView) properties_dialog.findViewById(R.id.file_icon);
         TextView file_name = (TextView) properties_dialog.findViewById(R.id.file_name);
         TextView versionCode = (TextView) properties_dialog.findViewById(R.id.versionCode);

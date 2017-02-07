@@ -1,5 +1,6 @@
 package com.jksol.filemanager.Adapters;
 
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -35,6 +36,23 @@ public class StorageTabAdapter extends FragmentStatePagerAdapter {
             case 1:
                 SDCardTabFragment tab2 = new SDCardTabFragment();
                 return tab2;
+
+            /*case 0:
+                Bundle bundle2 = new Bundle();
+                bundle2.putString("Path", "InternalStorage");
+                InternalStorageTabFragment tab1 = new InternalStorageTabFragment();
+                tab1.setArguments(bundle2);
+                return tab1;
+            case 1:
+                *//*SDCardTabFragment tab2 = new SDCardTabFragment();
+                return tab2;*//*
+                Bundle bundle1 = new Bundle();
+                bundle1.putString("Path", "ExternalStorage");
+                InternalStorageTabFragment tab2 = new InternalStorageTabFragment();
+                tab2.setArguments(bundle1);
+                return tab2;*/
+
+
             default:
                 return null;
         }

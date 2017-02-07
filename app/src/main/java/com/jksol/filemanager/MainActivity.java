@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements FragmentChange, L
     public static final String FG_TAG_DOC = "doc_fragment";
     public static final String FG_TAG_APK = "apk_fragment";
     public static final String FG_TAG_LAN_CONNECTION = "lanconnetion_fragment";
-    private static final String FG_TAG_HOME = "fragment_home";
-    private static final String FG_TAG_NETWORK = "network_fragment";
+    public static final String FG_TAG_HOME = "fragment_home";
+    public static final String FG_TAG_NETWORK = "network_fragment";
     private static final String FG_TAG_SETTING = "setting_fragment";
     private static final String FG_TAG_HELP = "help_fragment";
     private static final String FG_TAG_PROCESSVIEWER = "processviewer";
@@ -162,8 +162,8 @@ public class MainActivity extends AppCompatActivity implements FragmentChange, L
         invalidateOptionsMenu();
         Fragment fragment = getHomeFragment(navIndex);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
-                android.R.anim.fade_out);
+        /*fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
+                android.R.anim.fade_out);*/
         fragmentTransaction.replace(R.id.frame, fragment, TAG);
         fragmentTransaction.commitAllowingStateLoss();
     }
@@ -202,7 +202,9 @@ public class MainActivity extends AppCompatActivity implements FragmentChange, L
 
             case 4: // Network
                 navCurrentIndex = 4;
-                NetworkMain networkFragment = new NetworkMain();
+                /*NetworkMain networkFragment = new NetworkMain();
+                return networkFragment;*/
+                LanComputers networkFragment = new LanComputers();
                 return networkFragment;
 
             case 5: // Gallery

@@ -2,21 +2,25 @@ package com.jksol.filemanager.Utils;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.text.Html;
-import android.util.Log;
 
 import com.jksol.filemanager.R;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,6 +35,34 @@ import java.util.StringTokenizer;
  */
 
 public class Utils {
+
+    public static String convertTimeFromUnixTimeStamp(String date) {
+
+        DateFormat inputFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss zz yyy");
+        Date d = null;
+        try {
+            d = inputFormat.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        DateFormat outputFormat = new SimpleDateFormat("MMM dd, yyy h:mm a");
+        return outputFormat.format(d);
+
+    }
+
+    public Bitmap convertDrawableToBitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
 
     public void showSMBHelpDialog(Context m) {
 
@@ -66,28 +98,9 @@ public class Utils {
         alertDialog.show();
     }
 
-    public static String convertTimeFromUnixTimeStamp(String date) {
-
-        DateFormat inputFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss zz yyy");
-        Date d = null;
-        try {
-            d = inputFormat.parse(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        DateFormat outputFormat = new SimpleDateFormat("MMM dd, yyy h:mm a");
-        return outputFormat.format(d);
-
-    }
-
     public String getString(Context c, int a) {
         return c.getResources().getString(a);
     }
-
-
-
-
-
 
     public String getStoragePaths(String StorageType) {
         String Path = "";
@@ -102,15 +115,15 @@ public class Utils {
                     StorageUtils.StorageInfo externalPaths = data.get(0);
                     Path = externalPaths.getStoragePath();
 
-                    if(data.size() == 2) // if SdCard not Atteched.
+                    if (data.size() == 2) // if SdCard not Atteched.
                         Path = "Sdcard not found";
                     else
                         Path = "/storage/sdcard1";
-                }catch (Exception e){
+                } catch (Exception e) {
                     Path = "Sdcard not found";
                 }
             } else {
-                if(data.size() == 2) // if SdCard not Atteched.
+                if (data.size() == 2) // if SdCard not Atteched.
                     Path = "/storage/sdcard0";
                 else
                     Path = "/storage/sdcard1";
@@ -126,7 +139,7 @@ public class Utils {
 
                     String tmp = Path.substring(Path.lastIndexOf("/"));
                     Path = "/storage" + tmp;
-                }catch (Exception e){
+                } catch (Exception e) {
                     Path = "Sdcard not found";
                 }
             } else {
@@ -137,6 +150,38 @@ public class Utils {
         return Path;
     }
 
+    public Bitmap GetIcon(Context mContext, String pkgname) {
+
+        Drawable icon = null;
+        try {
+
+            try {
+               /* ApplicationInfo app = mContext.getPackageManager().getApplicationInfo(pkgname, 0);
+                icon = mContext.getPackageManager().getApplicationIcon(app);*/
+
+                String APKFilePath = pkgname; //For example...
+                PackageManager pm = mContext.getPackageManager();
+                PackageInfo pi = pm.getPackageArchiveInfo(APKFilePath, 0);
+
+                // the secret are these two lines....
+                pi.applicationInfo.sourceDir       = APKFilePath;
+                pi.applicationInfo.publicSourceDir = APKFilePath;
+                //
+
+                icon = pi.applicationInfo.loadIcon(pm);
+                //String   AppName = (String)pi.applicationInfo.loadLabel(pm);
+
+
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+        }
+
+        return convertDrawableToBitmap(icon);
+    }
 
     public static class StorageUtils {
 
@@ -244,7 +289,6 @@ public class Utils {
             }
         }
     }
-
 
 
 }

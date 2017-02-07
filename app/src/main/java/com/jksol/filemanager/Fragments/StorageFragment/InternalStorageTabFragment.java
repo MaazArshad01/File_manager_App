@@ -10,8 +10,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
@@ -32,18 +35,23 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jksol.filemanager.FileOperation.EventHandler;
 import com.jksol.filemanager.FileOperation.FileManager;
 import com.jksol.filemanager.Fragments.GalleryFragment.AllFileTypeFragment;
+import com.jksol.filemanager.Interfaces.FragmentChange;
 import com.jksol.filemanager.Interfaces.RecyclerViewContextmenuClick;
 import com.jksol.filemanager.MainActivity;
 import com.jksol.filemanager.R;
 import com.jksol.filemanager.Utils.AppController;
 import com.jksol.filemanager.Utils.Constats;
+import com.jksol.filemanager.Utils.FileUtil;
+import com.jksol.filemanager.Utils.MimeTypes;
 import com.jksol.filemanager.Utils.RecyclerTouchListener;
+import com.jksol.filemanager.Utils.SmbStreamer.Streamer;
 import com.jksol.filemanager.Utils.Utils;
 
 import java.io.File;
@@ -54,6 +62,7 @@ import jcifs.smb.SmbFile;
 
 public class InternalStorageTabFragment extends Fragment implements MainActivity.ButtonBackPressListener, RecyclerViewContextmenuClick {
 
+    public static ProgressBar file_loader;
     LinearLayout hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail;
     private InternalStorageTabFragment mContext;
     private SharedPreferences mSettings;
@@ -121,11 +130,16 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
             }
         }
     };
-
     private LinearLayout hidden_buttons;
     private boolean isDownloadFolder = false;
     private boolean isLanConnetion = false;
     private String smb_path = "";
+    private AsyncTask<Void, Void, Void> loadFile_AsyncTask;
+    private String rootPath = "";
+    private FragmentChange fragmentChangeListener;
+    private LinearLayout operationlayout_one;
+    private Streamer s;
+    private LinearLayout empty_layout;
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
@@ -169,6 +183,13 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_internalstorage, null);
 
+        if (getActivity() instanceof FragmentChange) {
+            fragmentChangeListener = (FragmentChange) getActivity();
+        }
+
+        file_loader = (ProgressBar) view.findViewById(R.id.file_loader);
+        file_loader.setVisibility(View.VISIBLE);
+
         Toast.makeText(getActivity(), "Oncreate", Toast.LENGTH_SHORT).show();
         try {
             if (getArguments() != null) {
@@ -194,8 +215,8 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
 
         setRetainInstance(true);
         initView(view);
-        setupPreference(savedInstanceState);
-        FileOperationLayouts(view);
+        setupPreference(savedInstanceState, view);
+        // FileOperationLayouts(view);
         setHasOptionsMenu(true);
 
         return view;
@@ -207,11 +228,12 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
 
         mDetailLabel = (TextView) view.findViewById(R.id.detail_label);
         mPathLabel = (TextView) view.findViewById(R.id.path_label);
-        // mPathLabel.setText("path: /sdcard");
+        mPathLabel.setText("path: /storage/emulated/0");
         // list = (ListView) view.findViewById(R.id.files_listview);
         files_recyclerView = (RecyclerView) view.findViewById(R.id.files_recyclerView);
         files_recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
 
+        empty_layout = (LinearLayout) view.findViewById(R.id.empty_layout);
         hidden_rename = (LinearLayout) view.findViewById(R.id.hidden_rename);
         hidden_add_favourite = (LinearLayout) view.findViewById(R.id.hidden_add_favourite);
         hidden_zip = (LinearLayout) view.findViewById(R.id.hidden_zip);
@@ -222,6 +244,7 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         hidden_delete = (LinearLayout) view.findViewById(R.id.hidden_delete);
         hidden_detail = (LinearLayout) view.findViewById(R.id.hidden_detail);
 
+        operationlayout_one = (LinearLayout) view.findViewById(R.id.operationlayout_one);
         hidden_buttons = (LinearLayout) view.findViewById(R.id.hidden_buttons);
         hidden_paste_layout = (LinearLayout) view.findViewById(R.id.hidden_paste_layout);
         hidden_paste = (LinearLayout) view.findViewById(R.id.hidden_paste);
@@ -241,7 +264,14 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         });
     }
 
-    private void setupPreference(Bundle savedInstanceState) {
+    public void paste() {
+        boolean multi_select = mHandler.hasMultiSelectData();
+        if (multi_select) {
+            mHandler.copyFileMultiSelect(mFileMag.getCurrentDir());
+        }
+    }
+
+    private void setupPreference(Bundle savedInstanceState, View view) {
         //  StorageList();
 
         /*read settings*/
@@ -250,7 +280,7 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         boolean thumb = mSettings.getBoolean(Constats.PREFS_IMAGE_THUMBNAIL, true);
         int space = mSettings.getInt(Constats.PREFS_STORAGE, View.VISIBLE);
         int color = mSettings.getInt(Constats.PREFS_COLOR, -1);
-        int sort = mSettings.getInt(Constats.PREFS_SORT_FILES, 3);
+        int sort = mSettings.getInt(Constats.PREFS_SORT_FILES, 1);
 
         Utils utils = new Utils();
         /*Log.d("External storage", utils.getStoragePaths("ExternalStorage"));
@@ -264,41 +294,75 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         } else if (isLanConnetion) {
             path = smb_path;
             mFileMag = new FileManager(path);
+            operationlayout_one.setVisibility(View.GONE);
 
         } else {
             mFileMag = new FileManager();
             path = utils.getStoragePaths("InternalStorage");
         }
 
+        rootPath = path;
+
         mFileMag.setShowHiddenFiles(hide);
         mFileMag.setSortType(sort);
 
         if (savedInstanceState != null)
-            mHandler = new EventHandler(context, mFileMag, savedInstanceState.getString("location"));
+            loadFiles(savedInstanceState.getString("location"), view);
         else
-            mHandler = new EventHandler(context, mFileMag, path);
-
+            loadFiles(path, view);
 
         //  Log.d("Document Type", getMimeType("/storage/emulated/0/abc2.docx"));
       /*  Log.d("Document File","Internal File Count :- " + String.valueOf(mFileMag.FindDifferentFile(new File(path)).size()));*/
 
-        mHandler.setUpdateLabels(mPathLabel, mDetailLabel);
+    }
 
-        mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
-        mHandler.setUpdateFileOperationViews(hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail);
+    private void loadFiles(final String path, final View view) {
 
-        // mHandler.setTextColor(color);
-        mHandler.setShowThumbnails(thumb);
-        // mTable = mHandler.new TableRow();
-        mTable = mHandler.new RecyclerViewTableRow();
+        if (loadFile_AsyncTask != null && loadFile_AsyncTask.getStatus() == AsyncTask.Status.RUNNING)
+            loadFile_AsyncTask.cancel(true);
+        loadFile_AsyncTask = new AsyncTask<Void, Void, Void>() {
+            int p1, p2;
 
-        /*  sets the ListAdapter for our ListActivity and
-         *  gives our EventHandler class the same adapter
-        */
-        mHandler.setListAdapter(mTable);
-        //list.setAdapter(mTable);
-        files_recyclerView.setAdapter(mTable);
-        recyclerviewClick();
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                file_loader.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected Void doInBackground(Void... voids) {
+                mHandler = new EventHandler(context, mFileMag, path);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void arr) {
+                super.onPostExecute(arr);
+
+                file_loader.setVisibility(View.GONE);
+
+                boolean thumb = mSettings.getBoolean(Constats.PREFS_IMAGE_THUMBNAIL, true);
+                mHandler.setUpdateLabels(mPathLabel, mDetailLabel, empty_layout);
+
+                mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
+                mHandler.setUpdateFileOperationViews(hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail);
+
+                // mHandler.setTextColor(color);
+                mHandler.setShowThumbnails(thumb);
+                // mTable = mHandler.new TableRow();
+                mTable = mHandler.new RecyclerViewTableRow();
+
+                /*  sets the ListAdapter for our ListActivity and
+                 *  gives our EventHandler class the same adapter
+                */
+                mHandler.setListAdapter(mTable);
+                //list.setAdapter(mTable);
+                files_recyclerView.setAdapter(mTable);
+                recyclerviewClick();
+                FileOperationLayouts(view);
+            }
+
+        }.execute();//.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void FileOperationLayouts(View view) {
@@ -402,11 +466,18 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         final Dialog create_dialog = new Dialog(context);
         create_dialog.setCancelable(false);
         create_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        create_dialog.setContentView(R.layout.rename_filedirectory_dialog);
+
+        if (FileUtil.FileOperation)
+            create_dialog.setContentView(R.layout.rename_filedirectory_dialog);
+        else
+            create_dialog.setContentView(R.layout.rename_filedirectory_dialog_new);
+
         create_dialog.getWindow().setBackgroundDrawable(
                 new ColorDrawable(android.graphics.Color.TRANSPARENT));
         create_dialog.getWindow().getAttributes().windowAnimations = R.style.confirmDeleteAnimation;
-        create_dialog.show();
+
+        if (!create_dialog.isShowing())
+            create_dialog.show();
 
         final EditText edt_rename = (EditText) create_dialog.findViewById(R.id.edt_rename);
 
@@ -415,7 +486,7 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
             @Override
             public void onClick(View v) {
                 create_dialog.dismiss();
-                //  mHandler.mDelegate.killMultiSelect(true);
+                // mHandler.mDelegate.killMultiSelect(true);
             }
         });
 
@@ -478,13 +549,6 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         });
     }
 
-    public void paste() {
-        boolean multi_select = mHandler.hasMultiSelectData();
-        if (multi_select) {
-            mHandler.copyFileMultiSelect(mFileMag.getCurrentDir());
-        }
-    }
-
     public void StorageList() {
 
         List<Utils.StorageUtils.StorageInfo> data = Utils.StorageUtils.getStorageList();
@@ -503,7 +567,6 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
             public void onClick(View view, int position) {
 
                 RecyclerClick(view, position);
-
             }
 
             @Override
@@ -584,13 +647,11 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         }
         if (file.isDirectory()) {
             if (file.canRead()) {
+                mHandler.stopFileLoadThread();
                 mHandler.stopThumbnailThread();
                 mHandler.updateDirectory(mFileMag.getNextDir(item, false));
                 mPathLabel.setText(mFileMag.getCurrentDir());
 
-                                /*set back button switch to true
-                                 * (this will be better implemented later)
-                                 */
                 if (!mUseBackKey)
                     mUseBackKey = true;
 
@@ -600,6 +661,43 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
             }
         }
 
+        /*music file selected--add more audio formats*/
+        else {
+
+            try {
+
+                s = Streamer.getInstance();
+                new Thread() {
+                    public void run() {
+                        try {
+                            s.setStreamSrc(file, null, file.length());//the second argument can be a list of subtitle files
+                            getActivity().runOnUiThread(new Runnable() {
+                                public void run() {
+                                    try {
+                                        Uri uri = Uri.parse(Streamer.URL + Uri.fromFile(new File(Uri.parse(file.getPath()).getPath())).getEncodedPath());
+                                        Intent i = new Intent(Intent.ACTION_VIEW);
+                                        i.setDataAndType(uri, MimeTypes.getMimeType(new File(file.getPath())));
+                                        PackageManager packageManager = getActivity().getPackageManager();
+                                        List<ResolveInfo> resInfos = packageManager.queryIntentActivities(i, 0);
+                                        if (resInfos != null && resInfos.size() > 0)
+                                            startActivity(i);
+                                        else
+                                            Toast.makeText(getActivity(), "You will need to copy this file to storage to open it", Toast.LENGTH_SHORT).show();
+                                    } catch (ActivityNotFoundException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+
+            } catch (Exception e) {
+            }
+        }
     }
 
     private void openFile(final String item, final File file) {
@@ -612,6 +710,7 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         }
         if (file.isDirectory()) {
             if (file.canRead()) {
+                mHandler.stopFileLoadThread();
                 mHandler.stopThumbnailThread();
                 mHandler.updateDirectory(mFileMag.getNextDir(item, false));
                 mPathLabel.setText(mFileMag.getCurrentDir());
@@ -869,20 +968,21 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
         if (keycode == KeyEvent.KEYCODE_SEARCH) {
             // showDialog(SEARCH_B);
 
-        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && !current.equals("/")) {
+        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && !current.equals(rootPath)) {
             if (mHandler.isMultiSelected()) {
                 mTable.killMultiSelect(true);
                 Toast.makeText(context, "Multi-select is now off", Toast.LENGTH_SHORT).show();
 
             } else {
                 //stop updating thumbnail icons if its running
+                mHandler.stopFileLoadThread();
                 mHandler.stopThumbnailThread();
                 mHandler.updateDirectory(mFileMag.getPreviousDir());
                 mPathLabel.setText(mFileMag.getCurrentDir());
             }
 
-        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && current.equals("/")) {
-            Toast.makeText(context, "Press back again to quit.", Toast.LENGTH_SHORT).show();
+        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && current.equals(rootPath)) {
+            // Toast.makeText(context, "Press back again to quit.", Toast.LENGTH_SHORT).show();
 
             if (mHandler.isMultiSelected()) {
                 mTable.killMultiSelect(true);
@@ -891,9 +991,14 @@ public class InternalStorageTabFragment extends Fragment implements MainActivity
 
             mUseBackKey = false;
             mPathLabel.setText(mFileMag.getCurrentDir());
+            if (mFileMag.isSmb()) {
+                fragmentChangeListener.OnFragmentChange(4, MainActivity.FG_TAG_NETWORK);
+            } else {
+                // fragmentChangeListener.OnFragmentChange(0, MainActivity.FG_TAG_HOME);
+            }
 
         } else if (keycode == KeyEvent.KEYCODE_BACK && !mUseBackKey && current.equals("/")) {
-            mContext.getActivity().finish();
+            //mContext.getActivity().finish();
         }
     }
 

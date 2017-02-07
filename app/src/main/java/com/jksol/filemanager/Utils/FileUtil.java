@@ -30,6 +30,8 @@ import jcifs.smb.SmbFile;
 
 public abstract class FileUtil {
 
+    public static boolean FileOperation = false; // true = Customized, false = not Customized
+
     public static String getFileNameFromPath(String path) {
         String name = path.substring(path.lastIndexOf("/"), path.length());
         return name;
@@ -44,7 +46,6 @@ public abstract class FileUtil {
             return null;
         }
     }
-
 
     /**
      * Check is a file is writable. Detects write issues on external SD card.

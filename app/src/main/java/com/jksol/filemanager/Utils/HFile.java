@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
@@ -122,6 +123,36 @@ public class HFile implements Parcelable {
         }
     }
 
+    public long totalFolderSize() {
+        long size = 0l;
+        if (isSmb()) {
+            try {
+
+                if (isDirectory()) {
+                    String pth = "";
+                    if (!path.endsWith("/"))
+                        pth = path + "/";
+                    else
+                        pth = path;
+
+                    size = new Futils().folderSize(new SmbFile(pth));
+                } else {
+                    size = length();
+                }
+
+            } catch (MalformedURLException e) {
+                size = 0l;
+                e.printStackTrace();
+            }
+        } else {
+            if (isDirectory())
+                size = new Futils().folderSize(new File(path));
+            else
+                size = length();
+        }
+        return size;
+    }
+
     public long folderSize() {
         long size = 0l;
         if (isSmb()) {
@@ -162,13 +193,21 @@ public class HFile implements Parcelable {
         String name[] = null;
         switch (mode) {
             case SMB_MODE:
-                SmbFile smbFile = getSmbFile();
-                if (smbFile != null)
-                    try {
+                try {
+                    SmbFile smbFile = null;
+                    if (isDirectory()) {
+                        if (!path.endsWith("/"))
+                            smbFile = new SmbFile(path + "/");
+                        else
+                            smbFile = new SmbFile(path);
+                    } else
+                        smbFile = new SmbFile(path);
+
+                    if (smbFile != null)
                         return smbFile.list();
-                    } catch (SmbException e) {
-                        e.printStackTrace();
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
             case LOCAL_MODE:
                 return new File(path).list();
@@ -176,6 +215,23 @@ public class HFile implements Parcelable {
                 return new File(path).list();
         }
         return name;
+    }
+
+    public boolean isHidden() {
+        boolean isHidden = false;
+        if (isSmb()) {
+            try {
+                isHidden = new SmbFile(path).isHidden();
+            } catch (SmbException e) {
+                isHidden = false;
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                isHidden = false;
+                e.printStackTrace();
+            }
+        } else if (isLocal()) isHidden = new File(path).isHidden();
+
+        return isHidden;
     }
 
     public boolean isDirectory() {
@@ -229,22 +285,62 @@ public class HFile implements Parcelable {
         return isDirectory;
     }
 
-    public long lastModified() throws MalformedURLException, SmbException {
+    public String generatePath() {
+        String pth = "";
+
+        if (isSmb()) {
+            if (isDirectory())
+                if (!path.endsWith("/"))
+                    pth = path + "/";
+                else
+                    pth = path;
+            else
+                pth = path;
+
+        } else
+            pth = path;
+
+        return pth;
+    }
+
+    public String getParent() {
+        String parent = "";
         switch (mode) {
             case SMB_MODE:
-                SmbFile smbFile = getSmbFile();
-                if (smbFile != null)
-                    return smbFile.lastModified();
+                try {
+                    SmbFile smbFile = new SmbFile(path);
+                    if (smbFile != null)
+                        parent = smbFile.getParent();
+                } catch (Exception e) {
+                }
                 break;
             case LOCAL_MODE:
-                new File(path).lastModified();
+                parent = new File(path).getParent();
                 break;
+        }
+        return parent;
+    }
+
+    public long getLastModified() throws MalformedURLException, SmbException {
+        long date = 0;
+
+        switch (mode) {
+            case SMB_MODE:
+                SmbFile smbFile = new SmbFile(generatePath());
+                if (smbFile != null)
+                    date = smbFile.lastModified();
+                break;
+            case LOCAL_MODE:
+                date = new File(path).lastModified();
+                break;
+
             /*case ROOT_MODE:
                 BaseFile baseFile=generateBaseFileFromParent();
                 if(baseFile!=null)
                     return baseFile.getDate();*/
         }
-        return new File("/").lastModified();
+
+        return date;
     }
 
     public long length() {
@@ -356,7 +452,11 @@ public class HFile implements Parcelable {
     public boolean delete(Context context) {
         if (isSmb()) {
             try {
-                new SmbFile(path).delete();
+                if (isDirectory())
+                    new SmbFile(path + "/").delete();
+                else
+                    new SmbFile(path).delete();
+
             } catch (SmbException e) {
                 // Logger.log(e,path,context);
             } catch (MalformedURLException e) {
@@ -446,6 +546,46 @@ public class HFile implements Parcelable {
         return null;
     }
 
+    public ArrayList<HFile> getList() {
+
+        ArrayList<HFile> hFiles = new ArrayList<HFile>();
+        if (isSmb()) {
+            hFiles.clear();
+            try {
+                SmbFile smbFile = new SmbFile(path);
+                SmbFile[] smbfiles = smbFile.listFiles();
+                for (SmbFile sb : smbfiles) {
+                    HFile hFile = new HFile();
+                    hFile.setMode(SMB_MODE);
+                    hFile.setPath(sb.getPath());
+                    hFiles.add(hFile);
+                }
+
+                return hFiles;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            hFiles.clear();
+            try {
+                File file = new File(path);
+                File[] files = file.listFiles();
+                for (File sb : files) {
+                    HFile hFile = new HFile();
+                    hFile.setMode(LOCAL_MODE);
+                    hFile.setPath(sb.getPath());
+                    hFiles.add(hFile);
+                }
+                return hFiles;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+
     public int[] countFolderFile() {
         int countFile = 0;
         int countFolder = 0;
@@ -494,8 +634,12 @@ public class HFile implements Parcelable {
 
         if (isSmb()) {
             try {
+
+                if (!path.endsWith("/"))
+                    path = path + "/";
+
                 SmbFile smbFile = new SmbFile(path);
-                if(smbFile.isDirectory()) {
+                if (smbFile.isDirectory()) {
                     for (SmbFile file : smbFile.listFiles()) {
 
                         if (file.isFile())
@@ -505,7 +649,7 @@ public class HFile implements Parcelable {
                             countInnerFolderFile(file.getPath());
                         }
                     }
-                }else {
+                } else {
                     countFile += 1;
                 }
 
@@ -602,7 +746,6 @@ public class HFile implements Parcelable {
             }
         }
     }
-
 
     public String getCanonicalPath() {
         String CanonicalPath = "";

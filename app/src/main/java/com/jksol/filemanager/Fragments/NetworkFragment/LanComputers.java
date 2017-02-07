@@ -14,10 +14,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -33,6 +33,7 @@ import com.jksol.filemanager.Fragments.NetworkFragment.Lan.LanListAdapter;
 import com.jksol.filemanager.Fragments.NetworkFragment.Lan.SubnetScanner;
 import com.jksol.filemanager.R;
 import com.jksol.filemanager.Utils.AppController;
+import com.jksol.filemanager.Utils.Futils;
 import com.jksol.filemanager.Utils.RecyclerTouchListener;
 import com.jksol.filemanager.Utils.Utils;
 
@@ -49,23 +50,22 @@ import jcifs.smb.SmbFile;
  * Created by Umiya Mataji on 1/24/2017.
  */
 
-public class LanComputers extends Fragment{
+public class LanComputers extends Fragment {
 
     Context context;
-
+    String path = "", name = "";
     // ======================= Start Local Lan list Variable =================================
     private ArrayList<Computer> computers = new ArrayList<>();
     private SubnetScanner subnetScanner;
     private RecyclerView recycler_view_lan_list;
     private LinearLayout noLanLayout;
     private LanListAdapter lanListAdapter;
-    private ProgressBar lan_loader;
     // ======================= End Local Lan list Variable =================================
-
+    private ProgressBar lan_loader;
     // ======================= Start SMB COnnection Variable =================================
     private String emptyAddress, emptyName, invalidDomain, invalidUsername;
-    private SmbConnectionListener smbConnectionListener;
     // ======================= END SMB COnnection Variable =================================
+    private SmbConnectionListener smbConnectionListener;
 
     @Nullable
     @Override
@@ -77,12 +77,6 @@ public class LanComputers extends Fragment{
         getAllLocalNetworkPC();
 
         return view;
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
     }
 
     public void init(View view) {
@@ -126,8 +120,13 @@ public class LanComputers extends Fragment{
         SMBConnect_dialog.show();
 
 
-        final String path = computers.get(position).addr;
-        final String name = computers.get(position).name;
+        try {
+            path = computers.get(position).addr;
+            name = computers.get(position).name;
+        } catch (Exception e) {
+            SMBConnect_dialog.dismiss();
+            Toast.makeText(context, new Futils().getString(context, R.string.soemthingwrong), Toast.LENGTH_SHORT).show();
+        }
         emptyAddress = String.format(getString(R.string.cantbeempty), getString(R.string.ip));
         emptyName = String.format(getString(R.string.cantbeempty), getString(R.string.connectionname));
         invalidDomain = String.format(getString(R.string.invalid), getString(R.string.domain));
@@ -352,6 +351,9 @@ public class LanComputers extends Fragment{
     }
 
     public void getAllLocalNetworkPC() {
+        computers.clear();
+        lanListAdapter.notifyDataSetChanged();
+
         computers.add(new Computer("-1", "-1"));
         subnetScanner = new SubnetScanner(getActivity());
 
@@ -365,7 +367,7 @@ public class LanComputers extends Fragment{
                             if (!computers.contains(computer)) {
                                 computers.add(computers.size() - 1, computer);
                                 lanListAdapter.notifyDataSetChanged();
-                                Log.d("Local networks", "Name :- " + computer.name + " IP :- " + computer.addr);
+                                // Log.d("Local networks", "Name :- " + computer.name + " IP :- " + computer.addr);
                             }
                         }
                     });
@@ -377,7 +379,7 @@ public class LanComputers extends Fragment{
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Log.d("Local networks", "Finish");
+                            //  Log.d("Local networks", "Finish");
 
                             if (computers.size() == 1) {
                                 lan_loader.setVisibility(View.GONE);
@@ -410,6 +412,25 @@ public class LanComputers extends Fragment{
             Toast.makeText(context, "Error :- " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return null;
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+        inflater.inflate(R.menu.lan_computer_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.menu_refresh:
+                getAllLocalNetworkPC();
+                break;
+
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public interface SmbConnectionListener {

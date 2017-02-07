@@ -52,10 +52,13 @@ import android.widget.Toast;
 import com.jksol.filemanager.ApplicationBackup;
 import com.jksol.filemanager.HelpManager;
 import com.jksol.filemanager.MainActivity;
+import com.jksol.filemanager.Model.MediaFileListModel;
 import com.jksol.filemanager.ProcessManager;
 import com.jksol.filemanager.R;
 import com.jksol.filemanager.Services.CopyService;
 import com.jksol.filemanager.Services.DeleteService;
+import com.jksol.filemanager.Utils.FileUtil;
+import com.jksol.filemanager.Utils.Futils;
 import com.jksol.filemanager.Utils.HFile;
 import com.jksol.filemanager.Utils.Utils;
 
@@ -104,16 +107,18 @@ public class EventHandler implements OnClickListener {
     public RecyclerViewTableRow mDelegate;
 
     public boolean multi_select_flag = false;
+    public boolean delete_after_copy = false;
     LinearLayout hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail;
     private ArrayList<String> filteredUserList = null;
     private ThumbnailCreator mThumbnail;
-    public boolean delete_after_copy = false;
     private boolean thumbnail_flag = true;
     private int mColor = Color.BLACK;
     private TextView mPathLabel;
     private TextView mInfoLabel;
     private LinearLayout hidden_buttons;
     private LinearLayout hidden_paste_layout;
+    private FilesLoaderThread mFileLoaderThread;
+    private LinearLayout empty_layout;
 
     /**
      * Creates an EventHandler object. This object is used to communicate
@@ -183,12 +188,16 @@ public class EventHandler implements OnClickListener {
      * the TextView that should be updated as the directory changes
      * so the user knows which folder they are in.
      *
-     * @param path  The label to update as the directory changes
-     * @param label the label to update information
+     * @param path         The label to update as the directory changes
+     * @param label        the label to update information
+     * @param empty_layout
      */
-    public void setUpdateLabels(TextView path, TextView label) {
+    public void setUpdateLabels(TextView path, TextView label, LinearLayout empty_layout) {
         mPathLabel = path;
         mInfoLabel = label;
+        this.empty_layout = empty_layout;
+
+        mPathLabel.setText(mFileMang.getCurrentDir());
     }
 
     /**
@@ -294,7 +303,6 @@ public class EventHandler implements OnClickListener {
         intent1.putExtra("MODE", mFileMang.isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
         intent1.putExtra("move", delete_after_copy);
         mContext.startService(intent1);
-
     }
 
     /**
@@ -374,6 +382,18 @@ public class EventHandler implements OnClickListener {
         if (mThumbnail != null) {
             mThumbnail.setCancelThumbnails(true);
             mThumbnail = null;
+        }
+    }
+
+    /**
+     * this will stop our background thread that creates thumbnail icons
+     * if the thread is running. this should be stopped when ever
+     * we leave the folder the image files are in.
+     */
+    public void stopFileLoadThread() {
+        if (mFileLoaderThread != null) {
+            mFileLoaderThread.setCancelFile(true);
+            mFileLoaderThread = null;
         }
     }
 
@@ -483,7 +503,7 @@ public class EventHandler implements OnClickListener {
                         Intent intent1 = new Intent(mContext, DeleteService.class);
                         intent1.putExtra("FILE_PATHS", (mMultiSelectData));
                         intent1.putExtra("MODE", mFileMang.isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
-                        intent1.putExtra("ServiceType", "Hide");
+                        intent1.putExtra("ServiceType", "show");
                         mContext.startService(intent1);
 
                         mDelegate.killMultiSelect(true);
@@ -501,14 +521,42 @@ public class EventHandler implements OnClickListener {
                 break;
 
             case R.id.hidden_detail:
-                FileManager.file_detail_dialog(mContext, mMultiSelectData.get(0));
+                if (!FileUtil.FileOperation) {
+                    HFile hFile = new HFile();
+                    hFile.setMode(mFileMang.isSmb() ? hFile.SMB_MODE : HFile.LOCAL_MODE);
+                    hFile.setPath(mMultiSelectData.get(0));
 
-                /*Intent intent1 = new Intent(mContext, DeleteService.class);
-                intent1.putExtra("FILE_PATHS", (mMultiSelectData));
-                intent1.putExtra("MODE", mFileMang.isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
-                intent1.putExtra("ServiceType", "Hide");
-                mContext.startService(intent1);*/
+                    FileManager.file_detail_dialog(mContext, hFile);
+                    //FileManager.file_detail_dialog(mContext, mMultiSelectData.get(0));
 
+                } else {
+                    Futils futils = new Futils();
+                    ArrayList<HFile> hFileArray = new ArrayList<HFile>();
+
+                    for (String path : mMultiSelectData) {
+                        HFile hFile = new HFile();
+                        if (mFileMang.isSmb())
+                            hFile.setMode(HFile.SMB_MODE);
+                        else
+                            hFile.setMode(HFile.LOCAL_MODE);
+                        hFile.setPath(path);
+
+                        hFileArray.add(hFile);
+                    }
+
+                    futils.FilePropertyDialog(mContext, hFileArray);
+                }
+
+                // if (mMultiSelectData.size() == 1) {
+                    /*HFile hFile = new HFile();
+                    if(mFileMang.isSmb())
+                        hFile.setMode(HFile.SMB_MODE);
+                    else
+                        hFile.setMode(HFile.LOCAL_MODE);
+                    hFile.setPath(mMultiSelectData.get(0));
+
+                    futils.FilePropertyDialog(mContext, hFile);*/
+                //}
                 break;
 
             case R.id.hidden_zip:
@@ -517,63 +565,7 @@ public class EventHandler implements OnClickListener {
                 break;
 
             case R.id.hidden_rename:
-
-                final Dialog rename_dialog = new Dialog(mContext);
-                rename_dialog.setCancelable(false);
-                rename_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                rename_dialog.setContentView(R.layout.rename_filedirectory_dialog);
-                rename_dialog.getWindow().setBackgroundDrawable(
-                        new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                rename_dialog.getWindow().getAttributes().windowAnimations = R.style.confirmDeleteAnimation;
-                rename_dialog.show();
-
-                final EditText edt_rename = (EditText) rename_dialog.findViewById(R.id.edt_rename);
-
-                Button dialog_close = (Button) rename_dialog.findViewById(R.id.dialaog_cancel);
-                dialog_close.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        rename_dialog.dismiss();
-                        mDelegate.killMultiSelect(true);
-                    }
-                });
-
-
-                TextView txt_dialog_label = (TextView) rename_dialog.findViewById(R.id.txt_dialog_label);
-                if (mMultiSelectData.size() == 1) {
-                    txt_dialog_label.setText(mContext.getResources().getString(R.string.rename));
-
-                    String name = mMultiSelectData.get(0).substring(mMultiSelectData.get(0).lastIndexOf("/"), mMultiSelectData.get(0).length());
-                    name = name.substring(1);
-                    try {
-                        name = name.substring(0, name.lastIndexOf("."));
-                    } catch (Exception e) {
-                    }
-
-                    edt_rename.setText(name);
-                } else {
-                    txt_dialog_label.setText(mContext.getResources().getString(R.string.batchrename));
-                }
-
-
-                Button dialog_ok = (Button) rename_dialog.findViewById(R.id.dialog_ok);
-                dialog_ok.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        if (TextUtils.isEmpty(edt_rename.getText().toString())) {
-                            edt_rename.setError("Please enter the name");
-                        } else {
-                            edt_rename.setError(null);
-                            renameFileMultiSelect(edt_rename.getText().toString());
-                            rename_dialog.dismiss();
-                           /* String[] stockArr = new String[mMultiSelectData.size()];
-                            stockArr = mMultiSelectData.toArray(stockArr);
-
-                            new BackgroundWork(RENAME_TYPE).execute(stockArr);*/
-                        }
-                    }
-                });
+                RenameDialog();
 
                 break;
 
@@ -602,9 +594,77 @@ public class EventHandler implements OnClickListener {
                 break;
 
             case R.id.hidden_add_favourite:
-                Toast.makeText(mContext, "Favourite", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, "Added to Favourites :- " + mMultiSelectData.get(0), Toast.LENGTH_SHORT).show();
+
                 break;
         }
+    }
+
+    public void RenameDialog() {
+
+        final Dialog rename_dialog = new Dialog(mContext);
+        rename_dialog.setCancelable(false);
+        rename_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        if (FileUtil.FileOperation == true)
+            rename_dialog.setContentView(R.layout.rename_filedirectory_dialog);
+        else
+            rename_dialog.setContentView(R.layout.rename_filedirectory_dialog_new);
+
+
+        rename_dialog.getWindow().setBackgroundDrawable(
+                new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        rename_dialog.getWindow().getAttributes().windowAnimations = R.style.confirmDeleteAnimation;
+        rename_dialog.show();
+
+        final EditText edt_rename = (EditText) rename_dialog.findViewById(R.id.edt_rename);
+
+        Button dialog_close = (Button) rename_dialog.findViewById(R.id.dialaog_cancel);
+        dialog_close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rename_dialog.dismiss();
+                mDelegate.killMultiSelect(true);
+            }
+        });
+
+
+        TextView txt_dialog_label = (TextView) rename_dialog.findViewById(R.id.txt_dialog_label);
+        if (mMultiSelectData.size() == 1) {
+            txt_dialog_label.setText(mContext.getResources().getString(R.string.rename));
+
+            String name = mMultiSelectData.get(0).substring(mMultiSelectData.get(0).lastIndexOf("/"), mMultiSelectData.get(0).length());
+            name = name.substring(1);
+            try {
+                name = name.substring(0, name.lastIndexOf("."));
+            } catch (Exception e) {
+            }
+
+            edt_rename.setText(name);
+            edt_rename.setSelection(0, name.length());
+        } else {
+            txt_dialog_label.setText(mContext.getResources().getString(R.string.batchrename));
+        }
+
+
+        Button dialog_ok = (Button) rename_dialog.findViewById(R.id.dialog_ok);
+        dialog_ok.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (TextUtils.isEmpty(edt_rename.getText().toString())) {
+                    edt_rename.setError("Please enter the name");
+                } else {
+                    edt_rename.setError(null);
+                    renameFileMultiSelect(edt_rename.getText().toString());
+                    rename_dialog.dismiss();
+                           /* String[] stockArr = new String[mMultiSelectData.size()];
+                            stockArr = mMultiSelectData.toArray(stockArr);
+                            new BackgroundWork(RENAME_TYPE).execute(stockArr);*/
+                }
+            }
+        });
+
     }
 
     /**
@@ -629,6 +689,11 @@ public class EventHandler implements OnClickListener {
      */
     public void updateDirectory(ArrayList<String> content) {
         // LinearLayout hidden_layout;
+
+        if (content.size() == 0)
+            empty_layout.setVisibility(View.VISIBLE);
+        else
+            empty_layout.setVisibility(View.GONE);
 
         if (!mDataSource.isEmpty())
             mDataSource.clear();
@@ -856,7 +921,6 @@ public class EventHandler implements OnClickListener {
                             final Handler handle = new Handler(new Handler.Callback() {
                                 public boolean handleMessage(Message msg) {
                                     notifyDataSetChanged();
-
                                     return true;
                                 }
                             });
@@ -977,8 +1041,10 @@ public class EventHandler implements OnClickListener {
         private final int KB = 1024;
         private final int MG = KB * KB;
         private final int GB = MG * KB;
+
         private String display_size;
         private ArrayList<Integer> positions;
+        private AsyncTask<Void, Void, Long> asyncTask;
 
         public void addMultiPosition(int index, String path) {
             if (positions == null)
@@ -1045,7 +1111,7 @@ public class EventHandler implements OnClickListener {
             }
         }
 
-        public String getFilePermissions(File file) {
+        public String getFilePermissions(HFile file) {
             String per = "-";
 
             if (file.isDirectory())
@@ -1069,25 +1135,25 @@ public class EventHandler implements OnClickListener {
             // Start Enable-Disable Detail Layout
             // LinearLayout hidden_detail = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_detail);
             // LinearLayout hidden_add_favourite = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_add_favourite);
+            if (!FileUtil.FileOperation)
+                if (mMultiSelectData != null && mMultiSelectData.size() == 1) {
+                    hidden_detail.setClickable(true);
+                    hidden_detail.setAlpha((float) 1);
 
-            if (mMultiSelectData != null && mMultiSelectData.size() == 1) {
-                hidden_detail.setClickable(true);
-                hidden_detail.setAlpha((float) 1);
+                    hidden_add_favourite.setClickable(true);
+                    hidden_add_favourite.setAlpha((float) 1);
+                } else {
+                    hidden_detail.setClickable(false);
+                    hidden_detail.setAlpha((float) 0.5);
 
-                hidden_add_favourite.setClickable(true);
-                hidden_add_favourite.setAlpha((float) 1);
-            } else {
-                hidden_detail.setClickable(false);
-                hidden_detail.setAlpha((float) 0.5);
-
-                hidden_add_favourite.setClickable(false);
-                hidden_add_favourite.setAlpha((float) 0.5);
-            }
+                    hidden_add_favourite.setClickable(false);
+                    hidden_add_favourite.setAlpha((float) 0.5);
+                }
             // End Enable-Disable Detail Layout
 
 
-            // Start Enable-Disable Detail Layout
-            // LinearLayout hidden_zip = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_zip);
+            //  Start Enable-Disable Detail Layout
+            //  LinearLayout hidden_zip = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_zip);
             //  LinearLayout hidden_move = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_move);
             //  LinearLayout hidden_copy = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_copy);
             //  LinearLayout hidden_delete = (LinearLayout) ((Activity) mContext).findViewById(R.id.hidden_delete);
@@ -1180,19 +1246,222 @@ public class EventHandler implements OnClickListener {
             notifyDataSetChanged();
         }
 
+        private void setFileIcon(HFile file, DataViewHolder mViewHolder) {
+            String ext = file.getName().toString();
+            String sub_ext = ext.substring(ext.lastIndexOf(".") + 1);
+
+                    /* This series of else if statements will determine which
+                     * icon is displayed
+                     */
+            if (sub_ext.equalsIgnoreCase("pdf")) {
+                mViewHolder.icon.setImageResource(R.drawable.pdf);
+
+            } else if (sub_ext.equalsIgnoreCase("mp3") ||
+                    sub_ext.equalsIgnoreCase("wma") ||
+                    sub_ext.equalsIgnoreCase("m4a") ||
+                    sub_ext.equalsIgnoreCase("m4p")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.music);
+
+            } else if (sub_ext.equalsIgnoreCase("png") ||
+                    sub_ext.equalsIgnoreCase("jpg") ||
+                    sub_ext.equalsIgnoreCase("jpeg") ||
+                    sub_ext.equalsIgnoreCase("gif") ||
+                    sub_ext.equalsIgnoreCase("tiff")) {
+
+                if (thumbnail_flag && file.length() != 0) {
+                    Bitmap thumb = mThumbnail.isBitmapCached(file.getPath());
+
+                    if (thumb == null) {
+
+                        final Handler handle = new Handler(new Handler.Callback() {
+                            public boolean handleMessage(Message msg) {
+                                notifyDataSetChanged();
+                                return true;
+                            }
+                        });
+
+                        try {
+                            mThumbnail.createNewThumbnail(mDataSource, mFileMang.getCurrentDir(), handle);
+
+                            if (!mThumbnail.isAlive())
+                                mThumbnail.start();
+                        } catch (Exception e) {
+                        }
+
+                    } else {
+                        mViewHolder.icon.setImageBitmap(thumb);
+                    }
+
+                } else {
+                    mViewHolder.icon.setImageResource(R.drawable.image);
+                }
+
+            } else if (sub_ext.equalsIgnoreCase("zip") ||
+                    sub_ext.equalsIgnoreCase("gzip") ||
+                    sub_ext.equalsIgnoreCase("gz")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.zip);
+
+            } else if (sub_ext.equalsIgnoreCase("m4v") ||
+                    sub_ext.equalsIgnoreCase("wmv") ||
+                    sub_ext.equalsIgnoreCase("3gp") ||
+                    sub_ext.equalsIgnoreCase("mp4")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.movies);
+
+            } else if (sub_ext.equalsIgnoreCase("doc") ||
+                    sub_ext.equalsIgnoreCase("docx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.word);
+
+            } else if (sub_ext.equalsIgnoreCase("xls") ||
+                    sub_ext.equalsIgnoreCase("xlsx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.excel);
+
+            } else if (sub_ext.equalsIgnoreCase("ppt") ||
+                    sub_ext.equalsIgnoreCase("pptx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.ppt);
+
+            } else if (sub_ext.equalsIgnoreCase("html")) {
+                mViewHolder.icon.setImageResource(R.drawable.html32);
+
+            } else if (sub_ext.equalsIgnoreCase("xml")) {
+                mViewHolder.icon.setImageResource(R.drawable.xml32);
+
+            } else if (sub_ext.equalsIgnoreCase("conf")) {
+                mViewHolder.icon.setImageResource(R.drawable.config32);
+
+            } else if (sub_ext.equalsIgnoreCase("apk")) {
+
+                if (file.isSmb()) {
+                    mViewHolder.icon.setImageResource(R.drawable.appicon);
+                } else {
+                    try {
+                        Bitmap bitmap = new Utils().GetIcon(mContext, file.getPath());
+                        if (bitmap != null)
+                            mViewHolder.icon.setImageBitmap(bitmap);
+                        else
+                            mViewHolder.icon.setImageResource(R.drawable.appicon);
+                    } catch (Exception e) {
+                        mViewHolder.icon.setImageResource(R.drawable.appicon);
+                    }
+                }
+
+            } else if (sub_ext.equalsIgnoreCase("jar")) {
+                mViewHolder.icon.setImageResource(R.drawable.jar32);
+
+            } else {
+                mViewHolder.icon.setImageResource(R.drawable.text);
+            }
+        }
+
+        private void setFileIcon(String filename, String file, DataViewHolder mViewHolder) {
+            String ext = filename;
+            String sub_ext = ext.substring(ext.lastIndexOf(".") + 1);
+
+                    /* This series of else if statements will determine which
+                     * icon is displayed
+                     */
+            if (sub_ext.equalsIgnoreCase("pdf")) {
+                mViewHolder.icon.setImageResource(R.drawable.pdf);
+
+            } else if (sub_ext.equalsIgnoreCase("mp3") ||
+                    sub_ext.equalsIgnoreCase("wma") ||
+                    sub_ext.equalsIgnoreCase("m4a") ||
+                    sub_ext.equalsIgnoreCase("m4p")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.music);
+
+            } else if (sub_ext.equalsIgnoreCase("png") ||
+                    sub_ext.equalsIgnoreCase("jpg") ||
+                    sub_ext.equalsIgnoreCase("jpeg") ||
+                    sub_ext.equalsIgnoreCase("gif") ||
+                    sub_ext.equalsIgnoreCase("tiff")) {
+
+                if (thumbnail_flag && file.length() != 0) {
+                    Bitmap thumb = mThumbnail.isBitmapCached(file);
+
+                    if (thumb == null) {
+
+                        final Handler handle = new Handler(new Handler.Callback() {
+                            public boolean handleMessage(Message msg) {
+                                notifyDataSetChanged();
+                                return true;
+                            }
+                        });
+
+                        try {
+                            mThumbnail.createNewThumbnail(mDataSource, mFileMang.getCurrentDir(), handle);
+
+                            if (!mThumbnail.isAlive())
+                                mThumbnail.start();
+                        } catch (Exception e) {
+                        }
+
+                    } else {
+                        mViewHolder.icon.setImageBitmap(thumb);
+                    }
+
+                } else {
+                    mViewHolder.icon.setImageResource(R.drawable.image);
+                }
+
+            } else if (sub_ext.equalsIgnoreCase("zip") ||
+                    sub_ext.equalsIgnoreCase("gzip") ||
+                    sub_ext.equalsIgnoreCase("gz")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.zip);
+
+            } else if (sub_ext.equalsIgnoreCase("m4v") ||
+                    sub_ext.equalsIgnoreCase("wmv") ||
+                    sub_ext.equalsIgnoreCase("3gp") ||
+                    sub_ext.equalsIgnoreCase("mp4")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.movies);
+
+            } else if (sub_ext.equalsIgnoreCase("doc") ||
+                    sub_ext.equalsIgnoreCase("docx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.word);
+
+            } else if (sub_ext.equalsIgnoreCase("xls") ||
+                    sub_ext.equalsIgnoreCase("xlsx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.excel);
+
+            } else if (sub_ext.equalsIgnoreCase("ppt") ||
+                    sub_ext.equalsIgnoreCase("pptx")) {
+
+                mViewHolder.icon.setImageResource(R.drawable.ppt);
+
+            } else if (sub_ext.equalsIgnoreCase("html")) {
+                mViewHolder.icon.setImageResource(R.drawable.html32);
+
+            } else if (sub_ext.equalsIgnoreCase("xml")) {
+                mViewHolder.icon.setImageResource(R.drawable.xml32);
+
+            } else if (sub_ext.equalsIgnoreCase("conf")) {
+                mViewHolder.icon.setImageResource(R.drawable.config32);
+
+            } else if (sub_ext.equalsIgnoreCase("apk")) {
+                mViewHolder.icon.setImageResource(R.drawable.appicon);
+            } else if (sub_ext.equalsIgnoreCase("jar")) {
+                mViewHolder.icon.setImageResource(R.drawable.jar32);
+
+            } else {
+                mViewHolder.icon.setImageResource(R.drawable.text);
+            }
+        }
+
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+
             if (holder instanceof DataViewHolder) {
 
                 DataViewHolder mViewHolder = (DataViewHolder) holder;
-
-                int num_items = 0;
-                String temp = mFileMang.getCurrentDir();
-                File file = new File(temp + "/" + mDataSource.get(position));
-                String[] list = file.list();
-
-                if (list != null)
-                    num_items = list.length;
 
                 disableFileOperationButton();
 
@@ -1212,151 +1481,280 @@ public class EventHandler implements OnClickListener {
                 mViewHolder.topView.setTextColor(mColor);
                 mViewHolder.bottomView.setTextColor(mColor);
 
-                if (mThumbnail == null)
-                    mThumbnail = new ThumbnailCreator(52, 52);
+                int num_items = 0;
+                String temp = mFileMang.getCurrentDir();
 
-                if (file != null && file.isFile()) {
-                    String ext = file.toString();
-                    String sub_ext = ext.substring(ext.lastIndexOf(".") + 1);
+                if (!mFileMang.isSmb()) {
 
-                    /* This series of else if statements will determine which
-                     * icon is displayed
-                     */
-                    if (sub_ext.equalsIgnoreCase("pdf")) {
-                        mViewHolder.icon.setImageResource(R.drawable.pdf);
 
-                    } else if (sub_ext.equalsIgnoreCase("mp3") ||
-                            sub_ext.equalsIgnoreCase("wma") ||
-                            sub_ext.equalsIgnoreCase("m4a") ||
-                            sub_ext.equalsIgnoreCase("m4p")) {
+                    /*HFile file = new HFile();
+                    file.setMode(mFileMang.isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
+                    file.setPath(temp + "/" + mDataSource.get(position));*/
+                    File file = new File(temp + "/" + mDataSource.get(position));
 
-                        mViewHolder.icon.setImageResource(R.drawable.music);
+                    if (mFileMang.isSmb())
+                        thumbnail_flag = false;
 
-                    } else if (sub_ext.equalsIgnoreCase("png") ||
-                            sub_ext.equalsIgnoreCase("jpg") ||
-                            sub_ext.equalsIgnoreCase("jpeg") ||
-                            sub_ext.equalsIgnoreCase("gif") ||
-                            sub_ext.equalsIgnoreCase("tiff")) {
+                    if (mThumbnail == null)
+                        mThumbnail = new ThumbnailCreator(52, 52);
 
-                        if (thumbnail_flag && file.length() != 0) {
-                            Bitmap thumb = mThumbnail.isBitmapCached(file.getPath());
+                    if (file != null && file.isFile()) {
 
-                            if (thumb == null) {
+                        //setFileIcon(file, mViewHolder);
+                        setFileIcon(mDataSource.get(position), file.getPath(), mViewHolder);
 
-                                final Handler handle = new Handler(new Handler.Callback() {
-                                    public boolean handleMessage(Message msg) {
-                                        notifyDataSetChanged();
-                                        return true;
-                                    }
-                                });
-
-                                try {
-                                    mThumbnail.createNewThumbnail(mDataSource, mFileMang.getCurrentDir(), handle);
-
-                                    if (!mThumbnail.isAlive())
-                                        mThumbnail.start();
-                                } catch (Exception e) {
-                                }
-
-                            } else {
-                                mViewHolder.icon.setImageBitmap(thumb);
-                            }
-
-                        } else {
-                            mViewHolder.icon.setImageResource(R.drawable.image);
-                        }
-
-                    } else if (sub_ext.equalsIgnoreCase("zip") ||
-                            sub_ext.equalsIgnoreCase("gzip") ||
-                            sub_ext.equalsIgnoreCase("gz")) {
-
-                        mViewHolder.icon.setImageResource(R.drawable.zip);
-
-                    } else if (sub_ext.equalsIgnoreCase("m4v") ||
-                            sub_ext.equalsIgnoreCase("wmv") ||
-                            sub_ext.equalsIgnoreCase("3gp") ||
-                            sub_ext.equalsIgnoreCase("mp4")) {
-
-                        mViewHolder.icon.setImageResource(R.drawable.movies);
-
-                    } else if (sub_ext.equalsIgnoreCase("doc") ||
-                            sub_ext.equalsIgnoreCase("docx")) {
-
-                        mViewHolder.icon.setImageResource(R.drawable.word);
-
-                    } else if (sub_ext.equalsIgnoreCase("xls") ||
-                            sub_ext.equalsIgnoreCase("xlsx")) {
-
-                        mViewHolder.icon.setImageResource(R.drawable.excel);
-
-                    } else if (sub_ext.equalsIgnoreCase("ppt") ||
-                            sub_ext.equalsIgnoreCase("pptx")) {
-
-                        mViewHolder.icon.setImageResource(R.drawable.ppt);
-
-                    } else if (sub_ext.equalsIgnoreCase("html")) {
-                        mViewHolder.icon.setImageResource(R.drawable.html32);
-
-                    } else if (sub_ext.equalsIgnoreCase("xml")) {
-                        mViewHolder.icon.setImageResource(R.drawable.xml32);
-
-                    } else if (sub_ext.equalsIgnoreCase("conf")) {
-                        mViewHolder.icon.setImageResource(R.drawable.config32);
-
-                    } else if (sub_ext.equalsIgnoreCase("apk")) {
-                        mViewHolder.icon.setImageResource(R.drawable.appicon);
-
-                    } else if (sub_ext.equalsIgnoreCase("jar")) {
-                        mViewHolder.icon.setImageResource(R.drawable.jar32);
-
-                    } else {
-                        mViewHolder.icon.setImageResource(R.drawable.text);
-                    }
-
-                } else if (file != null && file.isDirectory()) {
-                    if (file.canRead() && file.list().length > 0)
+                    } else if (file != null && file.isDirectory()) {
+                        mViewHolder.icon.setImageResource(R.drawable.folder_default); // Not Empty folder
+                   /* if (file.canRead() && file.list().length > 0)
                         mViewHolder.icon.setImageResource(R.drawable.folder_default); // Not Empty folder
                     else
-                        mViewHolder.icon.setImageResource(R.drawable.folder); // Empty folder
-                }
-
-                String permission = getFilePermissions(file);
-
-                if (file.isFile()) {
-                    double size = file.length();
-                    if (size > GB)
-                        display_size = String.format("%.2f Gb ", (double) size / GB);
-                    else if (size < GB && size > MG)
-                        display_size = String.format("%.2f Mb ", (double) size / MG);
-                    else if (size < MG && size > KB)
-                        display_size = String.format("%.2f Kb ", (double) size / KB);
-                    else
-                        display_size = String.format("%.2f bytes ", (double) size);
-
-                    if (file.isHidden()) {
-                        mViewHolder.bottomView.setText("(hidden) | " + display_size + " | " + permission);
-                        mViewHolder.icon.setAlpha((float) 0.5);
-                    } else {
-                        mViewHolder.bottomView.setText(display_size + " | " + permission);
-                        mViewHolder.icon.setAlpha((float) 1);
+                        mViewHolder.icon.setImageResource(R.drawable.folder); // Empty folder*/
                     }
+
+
+                    String per = "-";
+                    if (file.isDirectory())
+                        per += "d";
+                    if (file.canRead())
+                        per += "r";
+                    if (file.canWrite())
+                        per += "w";
+
+                    String permission = per; //getFilePermissions(file);
+
+                    if (file.isFile()) {
+                        double size = file.length();
+                        if (size > GB)
+                            display_size = String.format("%.2f Gb ", (double) size / GB);
+                        else if (size < GB && size > MG)
+                            display_size = String.format("%.2f Mb ", (double) size / MG);
+                        else if (size < MG && size > KB)
+                            display_size = String.format("%.2f Kb ", (double) size / KB);
+                        else
+                            display_size = String.format("%.2f bytes ", (double) size);
+
+                        if (file.isHidden()) {
+                            mViewHolder.bottomView.setText("(hidden) | " + display_size + " | " + permission);
+                            mViewHolder.icon.setAlpha((float) 0.5);
+                        } else {
+                            mViewHolder.bottomView.setText(display_size + " | " + permission);
+                            mViewHolder.icon.setAlpha((float) 1);
+                        }
+
+                    } else {
+
+                        String[] list = file.list();
+
+                        if (list != null)
+                            num_items = list.length;
+
+                        if (file.isHidden()) {
+                            mViewHolder.bottomView.setText("(hidden) | " + num_items + " items | " + permission);
+                            mViewHolder.icon.setAlpha((float) 0.5);
+                        } else {
+                            mViewHolder.bottomView.setText(num_items + " items | " + permission);
+                            mViewHolder.icon.setAlpha((float) 1);
+                        }
+                    }
+
+                    Date lastModDate = null;
+                    try {
+                        lastModDate = new Date(file.lastModified());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    mViewHolder.creation_datetime.setText(Utils.convertTimeFromUnixTimeStamp(lastModDate.toString()));
+                    mViewHolder.topView.setText(mDataSource.get(position));
 
                 } else {
 
-                    if (file.isHidden()) {
-                        mViewHolder.bottomView.setText("(hidden) | " + num_items + " items | " + permission);
-                        mViewHolder.icon.setAlpha((float) 0.5);
-                    } else {
-                        mViewHolder.bottomView.setText(num_items + " items | " + permission);
-                        mViewHolder.icon.setAlpha((float) 1);
-                    }
+                    loadNetworkFiles(position, mViewHolder);  // Smooth Working Function
+                    //loadNetworkFiles2(position, mViewHolder);   // Hybrid Function ( On testing)
+                }
+            }
+        }
+
+        public void loadNetworkFiles2(int position, DataViewHolder mViewHolder) {
+
+            int num_items = 0;
+            String temp = mFileMang.getCurrentDir();
+            HFile file = new HFile();
+            file.setMode(mFileMang.isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
+            file.setPath(temp + "/" + mDataSource.get(position));
+            // File file = new File(temp + "/" + mDataSource.get(position));
+
+            if (mThumbnail == null)
+                mThumbnail = new ThumbnailCreator(52, 52);
+
+            if (file != null && file.isFile()) {
+
+                //  setFileIcon(file, mViewHolder);
+                setFileIcon(mDataSource.get(position), file.getPath(), mViewHolder);
+
+            } else if (file != null && file.isDirectory()) {
+                mViewHolder.icon.setImageResource(R.drawable.folder_default); // Not Empty folder
+                   /* if (file.canRead() && file.list().length > 0)
+                        mViewHolder.icon.setImageResource(R.drawable.folder_default); // Not Empty folder
+                    else
+                        mViewHolder.icon.setImageResource(R.drawable.folder); // Empty folder*/
+            }
+
+            String permission = getFilePermissions(file);
+
+            if (file.isFile()) {
+                double size = file.length();
+                if (size > GB)
+                    display_size = String.format("%.2f Gb ", (double) size / GB);
+                else if (size < GB && size > MG)
+                    display_size = String.format("%.2f Mb ", (double) size / MG);
+                else if (size < MG && size > KB)
+                    display_size = String.format("%.2f Kb ", (double) size / KB);
+                else
+                    display_size = String.format("%.2f bytes ", (double) size);
+
+                if (file.isHidden()) {
+                    mViewHolder.bottomView.setText("(hidden) | " + display_size + " | " + permission);
+                    mViewHolder.icon.setAlpha((float) 0.5);
+                } else {
+                    mViewHolder.bottomView.setText(display_size + " | " + permission);
+                    mViewHolder.icon.setAlpha((float) 1);
                 }
 
-                Date lastModDate = new Date(file.lastModified());
-                mViewHolder.creation_datetime.setText(Utils.convertTimeFromUnixTimeStamp(lastModDate.toString()));
+            } else {
 
-                mViewHolder.topView.setText(file.getName());
+                String[] list = file.list();
+
+                if (list != null)
+                    num_items = list.length;
+
+                if (file.isHidden()) {
+                    mViewHolder.bottomView.setText("(hidden) | " + num_items + " items | " + permission);
+                    mViewHolder.icon.setAlpha((float) 0.5);
+                } else {
+                    mViewHolder.bottomView.setText(num_items + " items | " + permission);
+                    mViewHolder.icon.setAlpha((float) 1);
+                }
             }
+
+            Date lastModDate = null;
+            try {
+                lastModDate = new Date(file.getLastModified());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mViewHolder.creation_datetime.setText(Utils.convertTimeFromUnixTimeStamp(lastModDate.toString()));
+
+            mViewHolder.topView.setText(mDataSource.get(position));
+
+        }
+
+        public void loadNetworkFiles(int position, DataViewHolder mViewHolder) {
+            String temp = mFileMang.getCurrentDir();
+            String path = temp + mDataSource.get(position);
+
+            if (!mDataSource.get(position).equalsIgnoreCase("Empty")) {
+
+                if (mFileLoaderThread == null)
+                    mFileLoaderThread = new FilesLoaderThread();
+
+                if (mFileLoaderThread != null) {
+
+                    MediaFileListModel data = mFileLoaderThread.isFileCached(path);
+
+                    if (data == null) {
+
+                        final Handler handle = new Handler(new Handler.Callback() {
+                            public boolean handleMessage(Message msg) {
+                                notifyDataSetChanged();
+                                return true;
+                            }
+                        });
+
+                        try {
+                            mFileLoaderThread.createNewFile(mDataSource, mFileMang.getCurrentDir(), handle);
+
+                            if (!mFileLoaderThread.isAlive())
+                                mFileLoaderThread.start();
+                        } catch (Exception e) {
+                        }
+
+                    } else {
+                        //Load data
+
+                        if (mThumbnail == null)
+                            mThumbnail = new ThumbnailCreator(52, 52);
+
+
+                        if (data != null && data.isDirectory()) {
+                            mViewHolder.icon.setImageResource(R.drawable.folder_default);
+                        } else {
+                            setFileIcon(mDataSource.get(position), path, mViewHolder);
+                        }
+
+                        String permission = data.getFilePermission();
+
+                        if (data.isDirectory()) {
+                            if (data.isHidden()) {
+                                mViewHolder.bottomView.setText("(hidden) | " + data.isFileListCount() + " items | " + permission);
+                                mViewHolder.icon.setAlpha((float) 0.5);
+                            } else {
+                                mViewHolder.bottomView.setText(data.isFileListCount() + " items | " + permission);
+                                mViewHolder.icon.setAlpha((float) 1);
+                            }
+
+                        } else {
+
+                            if (data.isHidden()) {
+                                mViewHolder.bottomView.setText("(hidden) | " + data.getFileSize() + " | " + permission);
+                                mViewHolder.icon.setAlpha((float) 0.5);
+                            } else {
+                                mViewHolder.bottomView.setText(data.getFileSize() + " | " + permission);
+                                mViewHolder.icon.setAlpha((float) 1);
+                            }
+                        }
+
+                        mViewHolder.creation_datetime.setText(Utils.convertTimeFromUnixTimeStamp(data.getFileCreatedTimeDatel().toString()));
+                        mViewHolder.topView.setText(data.getFileName());
+
+                        //mViewHolder.icon.setImageBitmap(thumb);
+                    }
+
+                } else {
+                    mViewHolder.icon.setImageResource(R.drawable.image);
+                }
+            } else {
+                mViewHolder.topView.setText("Empty");
+                mViewHolder.creation_datetime.setText("Empty");
+            }
+        }
+
+        public void loadData(final Context mContext, final ArrayList<HFile> hFiles, final TextView file_size) {
+            if (asyncTask != null && asyncTask.getStatus() == AsyncTask.Status.RUNNING)
+                asyncTask.cancel(true);
+            asyncTask = new AsyncTask<Void, Void, Long>() {
+
+
+                @Override
+                protected void onPreExecute() {
+                    super.onPreExecute();
+
+                }
+
+                @Override
+                protected Long doInBackground(Void... voids) {
+                    long totalSize = 0;
+
+
+                    return totalSize;
+                }
+
+                @Override
+                protected void onPostExecute(Long totalFileSize) {
+                    super.onPostExecute(totalFileSize);
+
+                }
+
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
         @Override

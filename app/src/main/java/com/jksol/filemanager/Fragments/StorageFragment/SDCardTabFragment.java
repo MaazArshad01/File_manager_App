@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
@@ -32,12 +33,14 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jksol.filemanager.FileOperation.EventHandler;
 import com.jksol.filemanager.FileOperation.FileManager;
 import com.jksol.filemanager.Fragments.GalleryFragment.AllFileTypeFragment;
+import com.jksol.filemanager.Interfaces.FragmentChange;
 import com.jksol.filemanager.Interfaces.RecyclerViewContextmenuClick;
 import com.jksol.filemanager.MainActivity;
 import com.jksol.filemanager.R;
@@ -116,7 +119,11 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
     };
 
     private LinearLayout hidden_buttons;
-
+    private AsyncTask<Void, Void, Void> loadFile_AsyncTask;
+    private ProgressBar file_loader;
+    private String rootPath = "";
+    private FragmentChange fragmentChangeListener;
+    private LinearLayout empty_layout;
 
     @Override
     public void onResume() {
@@ -161,13 +168,17 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_internalstorage, null);
 
+        if (getActivity() instanceof FragmentChange) {
+            fragmentChangeListener = (FragmentChange) getActivity();
+        }
+
        /* AppController.getInstance().setButtonBackPressed(this);
         AppController.getInstance().setRecyclerviewContextmenuClick(this);*/
 
         setRetainInstance(true);
         initView(view);
-        setupPreference(savedInstanceState);
-        FileOperationLayouts(view);
+        setupPreference(savedInstanceState, view);
+        //FileOperationLayouts(view);
         setHasOptionsMenu(true);
 
         return view;
@@ -177,6 +188,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         mContext = this;
         context = mContext.getActivity();
 
+        file_loader = (ProgressBar) view.findViewById(R.id.file_loader);
         mDetailLabel = (TextView) view.findViewById(R.id.detail_label);
         mPathLabel = (TextView) view.findViewById(R.id.path_label);
         mPathLabel.setText("path: /sdcard");
@@ -184,6 +196,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         files_recyclerView = (RecyclerView) view.findViewById(R.id.files_recyclerView);
         files_recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
 
+        empty_layout = (LinearLayout) view.findViewById(R.id.empty_layout);
         hidden_rename = (LinearLayout) view.findViewById(R.id.hidden_rename);
         hidden_add_favourite = (LinearLayout) view.findViewById(R.id.hidden_add_favourite);
         hidden_zip = (LinearLayout) view.findViewById(R.id.hidden_zip);
@@ -193,7 +206,6 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         hidden_move = (LinearLayout) view.findViewById(R.id.hidden_move);
         hidden_delete = (LinearLayout) view.findViewById(R.id.hidden_delete);
         hidden_detail = (LinearLayout) view.findViewById(R.id.hidden_detail);
-
 
         hidden_buttons = (LinearLayout) view.findViewById(R.id.hidden_buttons);
         hidden_paste_layout = (LinearLayout) view.findViewById(R.id.hidden_paste_layout);
@@ -214,7 +226,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         });
     }
 
-    private void setupPreference(Bundle savedInstanceState) {
+    private void setupPreference(Bundle savedInstanceState, View view) {
 
         /*read settings*/
         mSettings = mContext.getContext().getSharedPreferences(Constats.PREFS_NAME, 0);
@@ -222,7 +234,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         boolean thumb = mSettings.getBoolean(Constats.PREFS_IMAGE_THUMBNAIL, true);
         int space = mSettings.getInt(Constats.PREFS_STORAGE, View.VISIBLE);
         int color = mSettings.getInt(Constats.PREFS_COLOR, -1);
-        int sort = mSettings.getInt(Constats.PREFS_SORT_FILES, 3);
+        int sort = mSettings.getInt(Constats.PREFS_SORT_FILES, 1);
 
         Utils utils = new Utils();
         Log.d("External storage", utils.getStoragePaths("ExternalStorage"));
@@ -242,30 +254,74 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
             Log.d("kitkat paths :- ",path);
         }*/
 
+        rootPath = utils.getStoragePaths("ExternalStorage");
+
         if (savedInstanceState != null)
-            mHandler = new EventHandler(context, mFileMag, savedInstanceState.getString("location"));
+            loadFiles(savedInstanceState.getString("location"), view);
         else
-            mHandler = new EventHandler(context, mFileMag, utils.getStoragePaths("ExternalStorage"));
+            loadFiles(utils.getStoragePaths("ExternalStorage"), view);
 
-       /* Log.d("Document File","External File Count :- " + String.valueOf(mFileMag.FindDifferentFile(new File(utils.getStoragePaths("ExternalStorage"))).size()));*/
+    }
 
-        mHandler.setUpdateLabels(mPathLabel, mDetailLabel);
+    private void loadFiles(final String path, final View view) {
 
-        mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
-        mHandler.setUpdateFileOperationViews(hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail);
+        if (loadFile_AsyncTask != null && loadFile_AsyncTask.getStatus() == AsyncTask.Status.RUNNING)
+            loadFile_AsyncTask.cancel(true);
+        loadFile_AsyncTask = new AsyncTask<Void, Void, Void>() {
 
-        // mHandler.setTextColor(color);
-        mHandler.setShowThumbnails(thumb);
-        // mTable = mHandler.new TableRow();
-        mTable = mHandler.new RecyclerViewTableRow();
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                file_loader.setVisibility(View.VISIBLE);
+            }
 
-        /*  sets the ListAdapter for our ListActivity and
-         *  gives our EventHandler class the same adapter
-        */
-        mHandler.setListAdapter(mTable);
-        //list.setAdapter(mTable);
-        files_recyclerView.setAdapter(mTable);
-        recyclerviewClick();
+            @Override
+            protected Void doInBackground(Void... voids) {
+                mHandler = new EventHandler(context, mFileMag, path);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void arr) {
+                super.onPostExecute(arr);
+
+                if (mHandler.mDataSource.size() > 0) {
+
+                    String data = mHandler.mDataSource.get(0);
+                    if (data.equalsIgnoreCase("Empty")) {
+                        // empty_layout.setVisibility(View.VISIBLE);
+                        files_recyclerView.setVisibility(View.GONE);
+                    } else {
+                       // empty_layout.setVisibility(View.GONE);
+                        files_recyclerView.setVisibility(View.VISIBLE);
+                    }
+                }
+
+                file_loader.setVisibility(View.GONE);
+                boolean thumb = mSettings.getBoolean(Constats.PREFS_IMAGE_THUMBNAIL, true);
+                mHandler.setUpdateLabels(mPathLabel, mDetailLabel, empty_layout);
+
+                mHandler.setUpdateFileOperationLayout(hidden_buttons, hidden_paste_layout);
+                mHandler.setUpdateFileOperationViews(hidden_rename, hidden_add_favourite, hidden_zip, hidden_share, hidden_copy, hidden_move, hidden_delete, hidden_detail);
+
+                // mHandler.setTextColor(color);
+                mHandler.setShowThumbnails(thumb);
+                // mTable = mHandler.new TableRow();
+                mTable = mHandler.new RecyclerViewTableRow();
+
+                /*  sets the ListAdapter for our ListActivity and
+                 *  gives our EventHandler class the same adapter
+                */
+                mHandler.setListAdapter(mTable);
+                //list.setAdapter(mTable);
+                files_recyclerView.setAdapter(mTable);
+                recyclerviewClick();
+                FileOperationLayouts(view);
+
+            }
+
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
     }
 
     public void FileOperationLayouts(View view) {
@@ -329,7 +385,6 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     private void handleMenuSearch() {
         //  actionBar = getActivity().getSupportActionBar(); //get the actionbar
@@ -513,6 +568,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
             } else {
                 if (file.isDirectory()) {
                     if (file.canRead()) {
+                        mHandler.stopFileLoadThread();
                         mHandler.stopThumbnailThread();
                         mHandler.updateDirectory(mFileMag.getNextDir(item, false));
                         mPathLabel.setText(mFileMag.getCurrentDir());
@@ -802,6 +858,42 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
         if (keycode == KeyEvent.KEYCODE_SEARCH) {
             // showDialog(SEARCH_B);
 
+        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && !current.equals(rootPath)) {
+            if (mHandler.isMultiSelected()) {
+                mTable.killMultiSelect(true);
+                Toast.makeText(context, "Multi-select is now off", Toast.LENGTH_SHORT).show();
+
+            } else {
+                //stop updating thumbnail icons if its running
+                mHandler.stopFileLoadThread();
+                mHandler.stopThumbnailThread();
+                mHandler.updateDirectory(mFileMag.getPreviousDir());
+                mPathLabel.setText(mFileMag.getCurrentDir());
+            }
+
+        } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && current.equals(rootPath)) {
+            Toast.makeText(context, "Press back again to quit.", Toast.LENGTH_SHORT).show();
+
+            if (mHandler.isMultiSelected()) {
+                mTable.killMultiSelect(true);
+                Toast.makeText(context, "Multi-select is now off", Toast.LENGTH_SHORT).show();
+            }
+
+            mUseBackKey = false;
+            mPathLabel.setText(mFileMag.getCurrentDir());
+            if (mFileMag.isSmb()) {
+                fragmentChangeListener.OnFragmentChange(4, MainActivity.FG_TAG_NETWORK);
+            } else {
+                //  fragmentChangeListener.OnFragmentChange(0, MainActivity.FG_TAG_HOME);
+            }
+
+        } else if (keycode == KeyEvent.KEYCODE_BACK && !mUseBackKey && current.equals("/")) {
+            //mContext.getActivity().finish();
+        }
+
+        /*if (keycode == KeyEvent.KEYCODE_SEARCH) {
+            // showDialog(SEARCH_B);
+
         } else if (keycode == KeyEvent.KEYCODE_BACK && mUseBackKey && !current.equals("/")) {
             if (mHandler.isMultiSelected()) {
                 mTable.killMultiSelect(true);
@@ -809,6 +901,7 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
 
             } else {
                 //stop updating thumbnail icons if its running
+                mHandler.stopFileLoadThread();
                 mHandler.stopThumbnailThread();
                 mHandler.updateDirectory(mFileMag.getPreviousDir());
                 mPathLabel.setText(mFileMag.getCurrentDir());
@@ -827,7 +920,9 @@ public class SDCardTabFragment extends Fragment implements MainActivity.ButtonBa
 
         } else if (keycode == KeyEvent.KEYCODE_BACK && !mUseBackKey && current.equals("/")) {
             mContext.getActivity().finish();
-        }
+        }*/
+
+
     }
 
     @Override

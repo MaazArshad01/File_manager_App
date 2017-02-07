@@ -107,4 +107,11 @@
     <string name="moving">Moving</string>
     <string name="stopping">Stopping</string>
 
+    <string name="file">File</string>
+    <string name="folder">Folder</string>
+    <string name="multiplefiles">Multiple Files</string>
+    <string name="soemthingwrong">Something went wrong please try again later.</string>
+    <string name="refresh">Refresh</string>
+    <string name="empty">Empty</string>
+
 </resources>

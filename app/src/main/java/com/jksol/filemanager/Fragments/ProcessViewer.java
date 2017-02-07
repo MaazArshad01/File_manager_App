@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jksol.filemanager.Services.CopyService;
+import com.jksol.filemanager.Services.DeleteService;
 import com.jksol.filemanager.Utils.DataPackage;
 import com.jksol.filemanager.FileOperation.ZipTask;
 import com.jksol.filemanager.R;
@@ -38,6 +39,9 @@ public class ProcessViewer extends Fragment {
     boolean mBound = false;
 
     Futils utils = new Futils();
+
+    ArrayList<Integer> DeleteIds = new ArrayList<Integer>();
+    ArrayList<Integer> CancelledDeleteIds = new ArrayList<Integer>();
 
     ArrayList<Integer> CopyIds = new ArrayList<Integer>();
     ArrayList<Integer> CancelledCopyIds = new ArrayList<Integer>();
@@ -80,6 +84,36 @@ public class ProcessViewer extends Fragment {
         }
     };
 
+    private ServiceConnection mDeleteConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            DeleteService.LocalBinder binder = (DeleteService.LocalBinder) service;
+            DeleteService mService = binder.getService();
+            mBound = true;
+            for (int i : mService.hash1.keySet()) {
+                processDeleteResults(mService.hash1.get(i));
+            }
+            mService.setProgressListener(new DeleteService.ProgressListener() {
+                @Override
+                public void onUpdate(DataPackage dataPackage) {
+                    processDeleteResults(dataPackage);
+                }
+
+                @Override
+                public void refresh() {
+                    clear();
+                }
+            });
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     private ServiceConnection mCompressConnection = new ServiceConnection() {
 
@@ -132,6 +166,9 @@ public class ProcessViewer extends Fragment {
         Intent intent = new Intent(getActivity(), CopyService.class);
         getActivity().bindService(intent, mCopyConnection, 0);
 
+        Intent intent1 = new Intent(getActivity(), DeleteService.class);
+        getActivity().bindService(intent1, mDeleteConnection, 0);
+
         Intent intent2 = new Intent(getActivity(), ZipTask.class);
         getActivity().bindService(intent2, mCompressConnection, 0);
     }
@@ -141,8 +178,81 @@ public class ProcessViewer extends Fragment {
         super.onPause();
         running = false;
         getActivity().unbindService(mCopyConnection);
+        getActivity().unbindService(mDeleteConnection);
         getActivity().unbindService(mCompressConnection);
         clear();
+    }
+
+    public void processDeleteResults(final DataPackage b) {
+        if (!running) return;
+        if (getResources() == null) return;
+        if (b != null) {
+            int id = b.getId();
+            final Integer id1 = new Integer(id);
+            if (!CancelledDeleteIds.contains(id1)) {
+                if (DeleteIds.contains(id1)) {
+                    boolean completed = b.isCompleted();
+                    View process = rootView.findViewWithTag("delete" + id);
+                    if (completed) {
+                        try {
+                            rootView.removeViewInLayout(process);
+                            DeleteIds.remove(DeleteIds.indexOf(id1));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        String name = b.getName();
+                        int p1 = b.getP1();
+
+                        int total = (int) b.getTotal();
+                        int done = (int) b.getDone();
+
+                        String text = utils.getString(getActivity(), R.string.deleting) + "\n" + name + "\n" + done + "/" + total + "\n" + p1 + "%";
+
+                        ((TextView) process.findViewById(R.id.progressText)).setText(text);
+                        ProgressBar p = (ProgressBar) process.findViewById(R.id.progressBar1);
+                        p.setProgress(p1);
+
+                    }
+                } else {
+                    CardView root = (android.support.v7.widget.CardView) getActivity()
+                            .getLayoutInflater().inflate(R.layout.processrow, null);
+                    root.setTag("delete" + id);
+
+                    ImageButton cancel = (ImageButton) root.findViewById(R.id.delete_button);
+                    TextView progressText = (TextView) root.findViewById(R.id.progressText);
+
+                    // ((ImageView) root.findViewById(R.id.progressImage)).setImageDrawable(icon);
+                    cancel.setOnClickListener(new View.OnClickListener() {
+
+                        public void onClick(View p1) {
+                            Toast.makeText(getActivity(), utils.getString(getActivity(), R.string.stopping), Toast.LENGTH_LONG).show();
+                            Intent i = new Intent("deletecancel");
+                            i.putExtra("id", id1);
+                            getActivity().sendBroadcast(i);
+                            rootView.removeView(rootView.findViewWithTag("delete" + id1));
+
+                            DeleteIds.remove(DeleteIds.indexOf(id1));
+                            CancelledDeleteIds.add(id1);
+                            // TODO: Implement this method
+                        }
+                    });
+
+                    String name = b.getName();
+                    int p1 = b.getP1();
+
+                    String text = utils.getString(getActivity(), R.string.deleting) + "\n" + name;
+
+                    progressText.setText(text);
+                    ProgressBar p = (ProgressBar) root.findViewById(R.id.progressBar1);
+                    p.setMax((int)b.getTotal());
+                    p.setProgress(p1);
+
+                    DeleteIds.add(id1);
+                    rootView.addView(root);
+                }
+            }
+        }
     }
 
     public void processCopyResults(final DataPackage b) {
@@ -297,5 +407,6 @@ public class ProcessViewer extends Fragment {
         rootView.removeAllViewsInLayout();
         ZipIds.clear();
         CancelledZipIds.clear();
+        CancelledDeleteIds.clear();
     }
 }

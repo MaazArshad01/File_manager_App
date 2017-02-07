@@ -35,7 +35,7 @@ import android.widget.TextView;
 
 import com.jksol.filemanager.R;
 import com.jksol.filemanager.Utils.AppController;
-import com.jksol.filemanager.Utils.FileUtil;
+import com.jksol.filemanager.Utils.HFile;
 import com.jksol.filemanager.Utils.Utils;
 
 import java.io.BufferedInputStream;
@@ -45,6 +45,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +59,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 
 /**
@@ -249,23 +251,27 @@ public class FileManager {
                 (double) aval / (kb * kb), (double) total / (kb * kb));
     }
 
-    public static void file_detail_dialog(Context mContext, String filePath) {
+    public static void file_detail_dialog(Context mContext, HFile filePath) {
+
         final Dialog fileDetailsDialog = new Dialog(mContext, android.R.style.Theme_Translucent_NoTitleBar);
         fileDetailsDialog.setContentView(R.layout.custom_file_details_dialog);
+        fileDetailsDialog.show();
+
         final TextView lblFileName = (TextView) fileDetailsDialog.findViewById(R.id.id_name);
         final TextView lblFilePath = (TextView) fileDetailsDialog.findViewById(R.id.id_path);
         final TextView lblSize = (TextView) fileDetailsDialog.findViewById(R.id.id_size);
         final TextView lblCreateAt = (TextView) fileDetailsDialog.findViewById(R.id.id_create_at);
 
-        File file = new File(filePath);
-        lblFileName.setText("Name : " + file.getName());
-        lblFilePath.setText("Path : " + filePath);
+       // File file = new File(filePath);
+        lblFileName.setText("Name : " + filePath.getName());
+        lblFilePath.setText("Path : " + filePath.getPath());
+        lblSize.setText("Calculating");
 
-        if (file.isDirectory()) {
-            int subFolders = file.list().length;
+        if (filePath.isDirectory()) {
+            int subFolders = filePath.list().length;
             lblSize.setText("items : " + subFolders);
         } else {
-            long length = file.length();
+            long length = filePath.length();
             length = length / 1024;
             if (length >= 1024) {
                 length = length / 1024;
@@ -274,7 +280,15 @@ public class FileManager {
                 lblSize.setText("Size : " + length + " KB");
             }
         }
-        Date lastModDate = new Date(file.lastModified());
+
+        Date lastModDate = null;
+        try {
+            lastModDate = new Date(filePath.getLastModified());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (SmbException e) {
+            e.printStackTrace();
+        }
         lblCreateAt.setText("Created on : " + Utils.convertTimeFromUnixTimeStamp(lastModDate.toString()));
 
         Button btnOkay = (Button) fileDetailsDialog.findViewById(R.id.btn_okay);
@@ -288,7 +302,7 @@ public class FileManager {
                 fileDetailsDialog.dismiss();
             }
         });
-        fileDetailsDialog.show();
+
     }
 
     /**
@@ -409,7 +423,11 @@ public class FileManager {
         mPathStack.push("/");
         mPathStack.push(name);
 
-        return populate_list();
+        if (SMBPath.equals(""))
+            return populate_list();
+        else
+            return populate_list_smb();
+        //return populate_listData();
     }
 
     /**
@@ -443,6 +461,7 @@ public class FileManager {
         else if (size == 0)
             mPathStack.push("/");
 
+        //return populate_listData();
         if (SMBPath.equals(""))
             return populate_list();
         else
@@ -480,6 +499,7 @@ public class FileManager {
             mPathStack.push(path);
         }
 
+        //return populate_listData();
         if (SMBPath.equals(""))
             return populate_list();
         else
@@ -904,8 +924,12 @@ public class FileManager {
      */
     private ArrayList<String> populate_list() {
 
-        if (!mDirContent.isEmpty())
+        ArrayList<String> mFileContent = new ArrayList<String>();
+        if (!mDirContent.isEmpty()) {
+            mFileContent.clear();
             mDirContent.clear();
+        }
+
         try {
             File file = new File(mPathStack.peek());
 
@@ -915,12 +939,21 @@ public class FileManager {
 
 			/* add files/folder to arraylist depending on hidden status */
                 for (int i = 0; i < len; i++) {
+
+                    String path = mPathStack.peek() + "/" + list[i].toString();
+                    File fls = new File(path);
+
                     if (!mShowHiddenFiles) {
                         if (list[i].toString().charAt(0) != '.')
-                            mDirContent.add(list[i]);
-
+                            if (fls.isDirectory())
+                                mDirContent.add(list[i]);
+                            else
+                                mFileContent.add(list[i]);
                     } else {
-                        mDirContent.add(list[i]);
+                        if (fls.isDirectory())
+                            mDirContent.add(list[i]);
+                        else
+                            mFileContent.add(list[i]);
                     }
                 }
 
@@ -931,6 +964,7 @@ public class FileManager {
                         break;
 
                     case SORT_ALPHA:
+                        //Sort Directory
                         Object[] tt = mDirContent.toArray();
                         mDirContent.clear();
 
@@ -939,6 +973,325 @@ public class FileManager {
                         for (Object a : tt) {
                             mDirContent.add((String) a);
                         }
+
+                        //Sort Files
+                        Object[] t1 = mFileContent.toArray();
+                        mFileContent.clear();
+
+                        Arrays.sort(t1, alph);
+
+                        for (Object a : t1) {
+                            mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+                        break;
+
+                    case SORT_SIZE:
+
+                        //Directory Sort
+                        int index = 0;
+                        Object[] size_ar = mDirContent.toArray();
+                        String dir = mPathStack.peek();
+
+                        Arrays.sort(size_ar, size);
+
+                        mDirContent.clear();
+                        for (Object a : size_ar) {
+                            if (new File(dir + "/" + (String) a).isDirectory())
+                                mDirContent.add(index++, (String) a);
+                            else
+                                mDirContent.add((String) a);
+                        }
+
+                        //File Sort
+                        int index1 = 0;
+                        Object[] size_ar1 = mFileContent.toArray();
+                        String dir1 = mPathStack.peek();
+
+                        Arrays.sort(size_ar1, size);
+
+                        mFileContent.clear();
+                        for (Object a : size_ar1) {
+                            if (new File(dir1 + "/" + (String) a).isFile())
+                                mFileContent.add(index1++, (String) a);
+                            else
+                                mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+
+                        break;
+
+                    case SORT_TYPE:
+
+                        //Directory Sort
+                        int dirindex = 0;
+                        Object[] type_ar = mDirContent.toArray();
+                        String current = mPathStack.peek();
+
+                        Arrays.sort(type_ar, type);
+                        mDirContent.clear();
+
+                        for (Object a : type_ar) {
+                            if (new File(current + "/" + (String) a).isDirectory())
+                                mDirContent.add(dirindex++, (String) a);
+                            else
+                                mDirContent.add((String) a);
+                        }
+
+                        //File Sort
+                        int fileindex = 0;
+                        Object[] type_ar1 = mFileContent.toArray();
+                        String current1 = mPathStack.peek();
+
+                        Arrays.sort(type_ar1, type);
+                        mFileContent.clear();
+
+                        for (Object a : type_ar1) {
+                            if (new File(current1 + "/" + (String) a).isFile())
+                                mFileContent.add(fileindex++, (String) a);
+                            else
+                                mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+
+                        break;
+                }
+
+            } else {
+                mDirContent.add("Empty");
+            }
+        } catch (Exception e) {
+            Log.d("List Error", e.getMessage());
+
+        }
+        return mDirContent;
+    }
+
+    private ArrayList<String> populate_list_smb() {
+        ArrayList<String> mFileContent = new ArrayList<String>();
+        if (!mDirContent.isEmpty()) {
+            mFileContent.clear();
+            mDirContent.clear();
+        }
+        try {
+            SmbFile file = new SmbFile(mPathStack.peek());
+
+            if (file.exists()) {
+                String[] list = file.list();
+                int len = list.length;
+
+			/* add files/folder to arraylist depending on hidden status */
+                for (int i = 0; i < len; i++) {
+                    if (SMBPath.equals(mPathStack.peek()))
+                        if (list[i].toString().endsWith("$")) continue;
+
+                    String path = mPathStack.peek() + list[i].toString();
+                    SmbFile fls = new SmbFile(path);
+
+                    if (!mShowHiddenFiles) {
+                        if (list[i].toString().charAt(0) != '.')
+                            if (fls.isDirectory())
+                                mDirContent.add(list[i]);
+                            else
+                                mFileContent.add(list[i]);
+
+                    } else {
+                        if (fls.isDirectory())
+                            mDirContent.add(list[i]);
+                        else
+                            mFileContent.add(list[i]);
+                    }
+                }
+
+			/* sort the arraylist that was made from above for loop */
+                switch (mSortType) {
+                    case SORT_NONE:
+                        //no sorting needed
+                        break;
+
+                    case SORT_ALPHA:
+                        //Sort Directory
+                        Object[] tt = mDirContent.toArray();
+                        mDirContent.clear();
+
+                        Arrays.sort(tt, alph);
+
+                        for (Object a : tt) {
+                            mDirContent.add((String) a);
+                        }
+
+                        //Sort Files
+                        Object[] t1 = mFileContent.toArray();
+                        mFileContent.clear();
+
+                        Arrays.sort(t1, alph);
+
+                        for (Object a : t1) {
+                            mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+                        break;
+
+                    case SORT_SIZE:
+                        int index = 0;
+                        Object[] size_ar = mDirContent.toArray();
+                        String dir = mPathStack.peek();
+
+                        Arrays.sort(size_ar, size);
+
+                        mDirContent.clear();
+                        for (Object a : size_ar) {
+                            if (new SmbFile(dir + "/" + (String) a).isDirectory())
+                                mDirContent.add(index++, (String) a);
+                            else
+                                mDirContent.add((String) a);
+                        }
+
+                        //File Sort
+                        int index1 = 0;
+                        Object[] size_ar1 = mFileContent.toArray();
+                        String dir1 = mPathStack.peek();
+
+                        Arrays.sort(size_ar1, size);
+
+                        mFileContent.clear();
+                        for (Object a : size_ar1) {
+                            if (new SmbFile(dir1 + "/" + (String) a).isFile())
+                                mFileContent.add(index1++, (String) a);
+                            else
+                                mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+
+                        break;
+
+                    case SORT_TYPE:
+                        int dirindex = 0;
+                        Object[] type_ar = mDirContent.toArray();
+                        String current = mPathStack.peek();
+
+                        Arrays.sort(type_ar, type);
+                        mDirContent.clear();
+
+                        for (Object a : type_ar) {
+                            if (new SmbFile(current + "/" + (String) a).isDirectory())
+                                mDirContent.add(dirindex++, (String) a);
+                            else
+                                mDirContent.add((String) a);
+                        }
+
+                        //File Sort
+                        int fileindex = 0;
+                        Object[] type_ar1 = mFileContent.toArray();
+                        String current1 = mPathStack.peek();
+
+                        Arrays.sort(type_ar1, type);
+                        mFileContent.clear();
+
+                        for (Object a : type_ar1) {
+                            if (new SmbFile(current1 + "/" + (String) a).isFile())
+                                mFileContent.add(fileindex++, (String) a);
+                            else
+                                mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+
+                        break;
+                }
+
+            } else {
+                mDirContent.add("Empty");
+            }
+        } catch (Exception e) {
+            mDirContent.add("Empty");
+            Log.d("List Error", e.getMessage());
+
+        }
+        return mDirContent;
+    }
+
+
+    // Hybrid function to load files and folder. Note :- need to fast
+    private ArrayList<String> populate_listData() {
+        ArrayList<String> mFileContent = new ArrayList<String>();
+
+        if (!mDirContent.isEmpty())
+            mFileContent.clear();
+        mDirContent.clear();
+        try {
+
+            HFile hFile = new HFile();
+            hFile.setMode(isSmb() ? HFile.SMB_MODE : HFile.LOCAL_MODE);
+            hFile.setPath(mPathStack.peek());
+
+            if (hFile.exists()) {
+
+                ArrayList<HFile> mFile = hFile.getList();
+                for (int i = 0; i < mFile.size(); i++) {
+
+                    String name = mFile.get(i).getName();
+
+                    if (isSmb()) {
+                        name = (mFile.get(i).isDirectory() && name.endsWith("/")) ? name.substring(0, name.length() - 1) : name;
+                        if (SMBPath.equals(mPathStack.peek())) {
+                            if (name.endsWith("$")) continue;
+                        }
+                    }
+
+                    if (!mShowHiddenFiles) {
+                        if (name.charAt(0) != '.')
+                            if (mFile.get(i).isDirectory())
+                                mDirContent.add(name);
+                            else
+                                mFileContent.add(name);
+                        //mDirContent.add(name);
+
+                    } else {
+
+                        if (mFile.get(i).isDirectory())
+                            mDirContent.add(name);
+                        else
+                            mFileContent.add(name);
+
+                    }
+                }
+
+                /* sort the arraylist that was made from above for loop */
+                switch (mSortType) {
+                    case SORT_NONE:
+                        //no sorting needed
+                        break;
+
+                    case SORT_ALPHA:
+
+                        //Sort Directory
+                        Object[] tt = mDirContent.toArray();
+                        mDirContent.clear();
+
+                        Arrays.sort(tt, alph);
+
+                        for (Object a : tt) {
+                            mDirContent.add((String) a);
+                        }
+
+                        //Sort Files
+                        Object[] t1 = mFileContent.toArray();
+                        mFileContent.clear();
+
+                        Arrays.sort(t1, alph);
+
+                        for (Object a : t1) {
+                            mFileContent.add((String) a);
+                        }
+
+                        mDirContent.addAll(mFileContent);
+
                         break;
 
                     case SORT_SIZE:
@@ -971,20 +1324,47 @@ public class FileManager {
                             else
                                 mDirContent.add((String) a);
                         }
+
                         break;
                 }
 
-            } else {
-                mDirContent.add("Emtpy");
-            }
-        } catch (Exception e) {
-            Log.d("List Error", e.getMessage());
 
+            } else {
+                mDirContent.add("Empty");
+            }
+
+            /*SmbFile[] mFile = FileUtil.getSmbFile(mPathStack.peek(), 5000).listFiles();
+            for (int i = 0; i < mFile.length; i++) {
+
+                String name = mFile[i].getName();
+                name = (mFile[i].isDirectory() && name.endsWith("/")) ? name.substring(0, name.length() - 1) : name;
+                if (SMBPath.equals(mPathStack.peek())) {
+                    if (name.endsWith("$")) continue;
+                }
+
+                if (mFile[i].isDirectory()) {
+                    mDirContent.add(name);
+                } else {
+
+                    try {
+                        mDirContent.add(name);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }*/
+
+
+        } catch (Exception e) {
+
+            // Failed to connect:
+            mDirContent.add("Empty");
+            Log.d("List Error", e.getMessage());
         }
         return mDirContent;
     }
 
-    private ArrayList<String> populate_list_smb() {
+    /*private ArrayList<String> populate_list_smb() {
 
         if (!mDirContent.isEmpty())
             mDirContent.clear();
@@ -997,22 +1377,13 @@ public class FileManager {
                 if (SMBPath.equals(mPathStack.peek())) {
                     if (name.endsWith("$")) continue;
                 }
+
                 if (mFile[i].isDirectory()) {
                     mDirContent.add(name);
-                    // Log.d("Folder", name + " Path :- " + mFile[i].getPath() + " Time :-  " + mFile[i].lastModified());
-                  /*Layoutelements layoutelements = new Layoutelements(folder, name, mFile[i].getPath(), "", "", "", 0, false, mFile[i].lastModified() + "", true);
-                    layoutelements.setMode(1);
-                    searchHelper.add(layoutelements.generateBaseFile());
-                    a.add(layoutelements);*/
                 } else {
 
                     try {
                         mDirContent.add(name);
-                        //  Log.d("File", name + " Path" + mFile[i].getPath() + " Time :-  " + mFile[i].lastModified());
-                      /*Layoutelements layoutelements = new Layoutelements(Icons.loadMimeIcon(getActivity(), mFile[i].getPath(), !IS_LIST, res), name, mFile[i].getPath(), "", "", utils.readableFileSize(mFile[i].length()), mFile[i].length(), false, mFile[i].lastModified() + "", false);
-                        layoutelements.setMode(1);
-                        searchHelper.add(layoutelements.generateBaseFile());
-                        a.add(layoutelements);*/
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1022,10 +1393,9 @@ public class FileManager {
 
         } catch (Exception e) {
             Log.d("List Error", e.getMessage());
-
         }
         return mDirContent;
-    }
+    }*/
 
     /*
      * Zips a file at a location and places the resulting zip file at the toLocation
