@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+	Open Manager, an open source file manager for the Android system
+    Copyright (C) 2009, 2010  Joe Berria <nexesdevelopment@gmail.com>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/multiselect_check"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
+        android:src="@drawable/ic_uncheck" />
+
+    <ImageView
+        android:id="@+id/multiselect_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:src="@drawable/singlecheck"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/row_image"
+        android:layout_width="@dimen/storage_folder_img_size"
+        android:layout_height="@dimen/storage_folder_img_size"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="6dip"
+        android:layout_toRightOf="@+id/multiselect_check" />
+
+    <RelativeLayout
+        android:id="@+id/contain_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="@dimen/storage_folder_margin"
+        android:layout_toRightOf="@id/row_image"
+        android:orientation="horizontal">
+
+        <com.jksol.filemanager.Widgets.CustomTextView
+            android:id="@+id/top_view"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="foldername"
+            android:textColor="@color/black"
+            android:textSize="@dimen/storage_folder_text_big_size"
+            app:fontName="@string/font_helvetica_neue_regular" />
+
+        <com.jksol.filemanager.Widgets.CustomTextView
+            android:id="@+id/creation_datetime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/top_view"
+            android:layout_toLeftOf="@+id/bottom_view"
+            android:text="2015-05-30 13:18"
+            android:textSize="@dimen/storage_folder_text_small_size"
+            app:fontName="@string/font_regular" />
+
+        <com.jksol.filemanager.Widgets.CustomTextView
+            android:id="@+id/bottom_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/top_view"
+            android:layout_gravity="right"
+            android:text="2 items | -drw"
+            android:textColor="@color/lightGray" />
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/contain_layout"
+
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:background="@color/colorFooterBorderTop" />
+
+</RelativeLayout>
